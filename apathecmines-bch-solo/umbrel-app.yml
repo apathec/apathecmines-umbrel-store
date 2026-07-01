@@ -3,7 +3,6 @@ id: apathecmines-bch-solo
 category: bitcoin
 name: ApathecMines BCH Solo Pool
 version: "1.0.0"
-icon: icon.jpg
 tagline: Self-hosted Bitcoin Cash solo mining pool
 description: A fully self-hosted SOLO-mode Bitcoin Cash mining pool. Runs a full BCHN node, source-compiled Miningcore stratum engine, PostgreSQL, and the ApathecMines galaxy-themed dashboard. Point your SHA-256 ASICs at your own node and keep 100% of the block reward minus a 0.5% pool fee. No third-party pool operators, no trust required. First run requires the BCH blockchain to sync (~250GB, several hours). Connect miners to stratum+tcp://umbrel.local:3333 with your legacy BCH address as the username.
 developer: ApathecMines
