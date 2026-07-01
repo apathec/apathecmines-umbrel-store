@@ -1,13 +1,22 @@
-
 services:
 
   bchn:
-    image: theretromike/nodes:bitcoincash
+    image: zquestz/bitcoin-cash-node:29.0.0
     container_name: apathecmines-bchn-node
     restart: unless-stopped
     network_mode: host
     volumes:
       - bchn-node-data:/root/.bitcoin
+    command: >
+      bitcoind
+      -datadir=/root/.bitcoin
+      -server=1
+      -txindex=1
+      -listen=1
+      -rest=1
+      -rpcallowip=127.0.0.1
+      -rpcbind=127.0.0.1
+      -printtoconsole
 
   web:
     image: nginx:alpine
