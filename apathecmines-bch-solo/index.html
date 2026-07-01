@@ -113,10 +113,10 @@ function ago(s){
 
 async function poll(){
   try{
-    const[perfRes,blocksRes,minersRes]=await Promise.all([
+    const[perfRes,blocksRes,heightRes]=await Promise.all([
       fetch(API+"/api/pools/"+POOL_ID+"/performance"),
       fetch(API+"/api/pools/"+POOL_ID+"/blocks?page=0&pageSize=10"),
-      fetch(API+"/api/pools/"+POOL_ID+"/miners?page=0&pageSize=1")
+      fetch("https://api.blockchair.com/bitcoin-cash/stats")
     ]);
 
     // Performance — use most recent stat entry
@@ -130,7 +130,14 @@ async function poll(){
       document.getElementById("diff").textContent="Difficulty "+fmtD(latest.networkDifficulty);
     }
 
-    // Blocks
+    // Block height from blockchair
+    if(heightRes.ok){
+      const hd=await heightRes.json();
+      const height=hd?.data?.blocks;
+      if(height) document.getElementById("bheight").textContent=height.toLocaleString();
+    }
+
+    // Blocks found
     if(blocksRes.ok){
       const bd=await blocksRes.json();
       const bl=bd.result??bd??[];
@@ -143,11 +150,6 @@ async function poll(){
           +bl.map(b=>'<tr><td class="mono">'+(b.blockHeight??0).toLocaleString()+'</td><td class="mono hash">'+(b.hash?b.hash.slice(0,14)+'…':'—')+'</td><td>'+(b.status??'')+'</td><td class="right">'+ago(b.created)+'</td></tr>').join('')
           +'</tbody></table>';
       }
-    }
-
-    // Block height from miners or fallback
-    if(minersRes.ok){
-      const md=await minersRes.json();
     }
 
     document.getElementById("stext").textContent="Pool online · Updated just now";
@@ -169,7 +171,7 @@ setInterval(poll,30000);
 (function(){
   const c=document.getElementById("stars");
   const ctx=c.getContext("2d");
-  let stars=[];let t=0;
+  let stars=[],t=0;
   function rng(seed){let v=seed>>>0;return function(){v^=v<<13;v^=v>>17;v^=v<<5;return(v>>>0)/0xffffffff}}
   function build(){
     const r=rng(42);const W=c.width,H=c.height;stars=[];
