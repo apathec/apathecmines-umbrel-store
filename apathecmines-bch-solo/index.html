@@ -113,19 +113,28 @@ function ago(s){
 
 async function poll(){
   try{
-    const[perfRes,blocksRes,heightRes]=await Promise.all([
+    const[perfRes,blocksRes,minersRes,heightRes]=await Promise.all([
       fetch(API+"/api/pools/"+POOL_ID+"/performance"),
       fetch(API+"/api/pools/"+POOL_ID+"/blocks?page=0&pageSize=10"),
+      fetch(API+"/api/pools/"+POOL_ID+"/miners?page=0&pageSize=100"),
       fetch("https://api.blockchair.com/bitcoin-cash/stats")
     ]);
 
-    // Performance — use most recent stat entry
+    // Live miners — count and sum hashrate directly from miners endpoint
+    if(minersRes.ok){
+      const md=await minersRes.json();
+      const miners=Array.isArray(md)?md:(md.result??[]);
+      const count=miners.length;
+      const totalHr=miners.reduce((sum,m)=>sum+(m.hashrate??0),0);
+      document.getElementById("poolhr").textContent=fmtHr(totalHr);
+      document.getElementById("miners").textContent=count+" miner"+(count!==1?"s":"")+" connected";
+    }
+
+    // Network stats from performance endpoint
     if(perfRes.ok){
       const pd=await perfRes.json();
       const stats=pd.stats??[];
       const latest=stats[stats.length-1]??{};
-      document.getElementById("poolhr").textContent=fmtHr(latest.poolHashrate);
-      document.getElementById("miners").textContent=(latest.connectedMiners??0)+" miners connected";
       document.getElementById("nethr").textContent=fmtHr(latest.networkHashrate);
       document.getElementById("diff").textContent="Difficulty "+fmtD(latest.networkDifficulty);
     }
