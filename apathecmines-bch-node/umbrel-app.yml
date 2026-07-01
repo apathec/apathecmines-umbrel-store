@@ -1,32 +1,24 @@
-services:
-
-  bchn:
-    image: zquestz/bitcoin-cash-node:29.0.0
-    container_name: apathecmines-bchn-node
-    restart: unless-stopped
-    network_mode: host
-    volumes:
-      - bchn-node-data:/root/.bitcoin
-    command: >
-      bitcoind
-      -datadir=/root/.bitcoin
-      -server=1
-      -txindex=1
-      -listen=1
-      -rest=1
-      -rpcallowip=127.0.0.1
-      -rpcbind=127.0.0.1
-      -printtoconsole
-
-  web:
-    image: nginx:alpine
-    container_name: apathecmines-node-web
-    restart: unless-stopped
-    ports:
-      - "3081:80"
-    volumes:
-      - ${APP_DATA_DIR}/web:/usr/share/nginx/html:ro
-      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-
-volumes:
-  bchn-node-data:
+manifestVersion: 1
+id: apathecmines-bch-node
+name: ApathecMines BCH Node
+tagline: Bitcoin Cash full node. Run standalone or pair with the ApathecMines BCH Solo Pool.
+category: bitcoin
+version: "1.0.0"
+port: 3081
+description: A fully validating Bitcoin Cash node (BCHN v29.0.0). Run it standalone to contribute to the BCH network, or pair it with the ApathecMines BCH Solo Pool app for solo mining. Includes a live node status dashboard showing sync progress, connected peers, block height, and network info.
+developer: ApathecMines
+website: https://apathecmines.com
+submitter: ApathecMines
+submission: https://github.com/Apathec/apathecmines-bch-solo
+repo: https://github.com/Apathec/apathecmines-bch-solo
+support: https://github.com/Apathec/apathecmines-bch-solo/issues
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+releaseNotes: >-
+  1.0.0 - Initial Release
+dependencies: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
