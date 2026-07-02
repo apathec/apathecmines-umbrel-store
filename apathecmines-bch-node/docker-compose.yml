@@ -11,6 +11,16 @@ services:
     restart: on-failure
     depends_on:
       - node
+  nginx:
+    image: nginx:alpine
+    restart: on-failure
+    ports:
+      - "3081:80"
+    volumes:
+      - ${APP_DATA_DIR}/web:/usr/share/nginx/html:ro
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - node
   node:
     image: theretromike/nodes:bitcoincash
     restart: on-failure
