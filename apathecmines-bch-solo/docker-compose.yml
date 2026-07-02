@@ -1,13 +1,5 @@
 services:
 
-  bchn:
-    image: theretromike/nodes:bitcoincash
-    container_name: bchn
-    restart: unless-stopped
-    network_mode: host
-    volumes:
-      - bch-solo-pool_bchn-data:/root/.bitcoin
-
   postgres:
     image: postgres:16
     container_name: mc-postgres
@@ -49,6 +41,4 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
 volumes:
-  bch-solo-pool_bchn-data:
-    external: true
   mc-postgres-data:
