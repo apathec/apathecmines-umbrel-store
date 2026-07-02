@@ -30,3 +30,5 @@ services:
 
 volumes:
   bchn-node-data:
+    external: true
+    name: bch-solo-pool_bchn-data
