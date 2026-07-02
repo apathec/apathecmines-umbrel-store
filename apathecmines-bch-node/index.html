@@ -19,12 +19,17 @@ html,body{min-height:100vh;background:#02010a;overflow-x:hidden}
 .sdot{width:8px;height:8px;border-radius:50%;background:#e040fb;flex-shrink:0;box-shadow:0 0 10px #e040fb;animation:sdot 2.4s ease-in-out infinite}
 @keyframes sdot{0%,100%{opacity:1;box-shadow:0 0 10px #e040fb}50%{opacity:.15;box-shadow:none}}
 
-/* Sync progress bar */
-.sync-wrap{margin-bottom:44px}
-.sync-label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#c0b0d8;margin-bottom:10px;display:flex;justify-content:space-between}
-.sync-bar-bg{width:100%;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
-.sync-bar{height:100%;background:linear-gradient(90deg,#e040fb,#6090ff);border-radius:4px;transition:width .8s ease}
-.sync-status{margin-top:10px;font-size:13px;color:#e040fb;font-weight:700}
+.sync-wrap{margin-bottom:44px;background:rgba(4,2,18,.62);border:1px solid rgba(180,80,255,.2);border-radius:12px;padding:28px;backdrop-filter:blur(14px)}
+.sync-top{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#c0b0d8;margin-bottom:14px}
+.sync-track-wrap{position:relative;height:60px;display:flex;align-items:center}
+.sync-track{position:absolute;left:0;right:48px;top:50%;transform:translateY(-50%);height:8px;background:rgba(255,255,255,.08);border:0.5px solid rgba(180,80,255,.2);border-radius:4px;overflow:hidden}
+.sync-fill{height:100%;width:0%;background:linear-gradient(90deg,#e040fb,#aa60ff,#6090ff);border-radius:4px;transition:width .4s ease}
+.sync-coin{position:absolute;top:50%;transform:translate(-50%,-50%);left:0%;width:28px;height:28px;border-radius:50%;background:#00a846;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;box-shadow:0 0 0 2px rgba(0,168,70,.3);transition:left .4s ease,width .5s ease,height .5s ease,opacity .5s ease,font-size .5s ease;user-select:none;z-index:3}
+.sync-hole{position:absolute;right:0;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#080008 0%,#000 35%,#000 100%);box-shadow:0 0 0 2px #2a0066,0 0 10px 3px #4400aa,0 0 24px 8px rgba(100,0,200,.25);display:flex;align-items:center;justify-content:center;z-index:2;flex-shrink:0}
+.sync-ring1{position:absolute;width:58px;height:18px;border-radius:50%;border:1.5px solid rgba(160,50,255,.35);top:50%;left:50%;transform:translate(-50%,-50%) rotateX(72deg)}
+.sync-ring2{position:absolute;width:66px;height:22px;border-radius:50%;border:1px solid rgba(200,80,255,.15);top:50%;left:50%;transform:translate(-50%,-50%) rotateX(72deg)}
+.sync-singularity{width:8px;height:8px;border-radius:50%;background:#000;z-index:3}
+.sync-status{margin-top:14px;font-size:13px;color:#e040fb;letter-spacing:.05em}
 
 .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:44px}
 @media(max-width:520px){.cards{grid-template-columns:1fr}}
@@ -36,12 +41,13 @@ html,body{min-height:100vh;background:#02010a;overflow-x:hidden}
 .cval{font-size:clamp(22px,3vw,30px);font-weight:700;color:#ede8ff;line-height:1;margin-bottom:6px}
 .cval .m{color:#e040fb;text-shadow:0 0 18px rgba(224,64,251,.55)}
 .cval .b{color:#6090ff;text-shadow:0 0 18px rgba(96,144,255,.55)}
+.cval .g{color:#00c853;text-shadow:0 0 18px rgba(0,200,80,.55)}
 .csub{font-size:12px;color:#c0b0d8}
 
-.ready-box{margin-top:44px;border:1px solid rgba(224,64,251,.2);border-left:3px solid #e040fb;border-radius:0 10px 10px 0;padding:20px 24px;background:rgba(180,40,220,.07);backdrop-filter:blur(10px)}
+.ready-box{margin-top:44px;border:1px solid rgba(224,64,251,.2);border-left:3px solid #e040fb;border-radius:0 10px 10px 0;padding:20px 24px;background:rgba(180,40,220,.07);backdrop-filter:blur(10px);transition:all .5s ease}
 .ready-box.synced{border-color:rgba(0,200,80,.3);border-left-color:#00c853;background:rgba(0,150,60,.07)}
 .ready-label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#c0b0d8;margin-bottom:8px}
-.ready-val{font-size:14px;color:#e040fb;margin-bottom:4px}
+.ready-val{font-size:14px;color:#e040fb;margin-bottom:4px;transition:color .5s}
 .ready-box.synced .ready-val{color:#00c853}
 .ready-sub{font-size:12px;color:#c0b0d8}
 
@@ -62,16 +68,24 @@ html,body{min-height:100vh;background:#02010a;overflow-x:hidden}
 
   <div class="err" id="err"></div>
 
-  <!-- Sync progress -->
+  <!-- Black hole sync bar -->
   <div class="sync-wrap">
-    <div class="sync-label">
+    <div class="sync-top">
       <span>Sync Progress</span>
       <span id="syncpct">—</span>
     </div>
-    <div class="sync-bar-bg">
-      <div class="sync-bar" id="syncbar" style="width:0%"></div>
+    <div class="sync-track-wrap">
+      <div class="sync-track">
+        <div class="sync-fill" id="syncfill"></div>
+      </div>
+      <div class="sync-coin" id="synccoin">₿</div>
+      <div class="sync-hole" id="synchole">
+        <div class="sync-ring1"></div>
+        <div class="sync-ring2"></div>
+        <div class="sync-singularity"></div>
+      </div>
     </div>
-    <div class="sync-status" id="syncstatus">Waiting for node data...</div>
+    <div class="sync-status" id="syncstatus">Awaiting node data<span id="dots"></span></div>
   </div>
 
   <div class="cards">
@@ -99,77 +113,107 @@ html,body{min-height:100vh;background:#02010a;overflow-x:hidden}
 
   <div class="ready-box" id="readybox">
     <div class="ready-label">Node Status</div>
-    <div class="ready-val" id="readyval">Checking...</div>
+    <div class="ready-val" id="readyval">Checking<span id="dots2"></span></div>
     <div class="ready-sub" id="readysub">Connect your mining pool to: 127.0.0.1:8332</div>
   </div>
 </div>
 
 <script>
-function fmtDiff(d){
-  if(!d)return"—";
-  if(d>=1e12)return(d/1e12).toFixed(2)+"T";
-  if(d>=1e9)return(d/1e9).toFixed(2)+"G";
-  if(d>=1e6)return(d/1e6).toFixed(2)+"M";
-  return d.toFixed(2);
+function fmtDiff(d){if(!d)return"—";if(d>=1e12)return(d/1e12).toFixed(2)+"T";if(d>=1e9)return(d/1e9).toFixed(2)+"G";if(d>=1e6)return(d/1e6).toFixed(2)+"M";return d.toFixed(2)}
+function fmtSize(b){if(!b)return"—";if(b>=1e12)return(b/1e12).toFixed(2)+" TB";if(b>=1e9)return(b/1e9).toFixed(2)+" GB";return(b/1e6).toFixed(2)+" MB"}
+
+// Animated ellipsis
+let dc=0;
+setInterval(()=>{
+  dc=(dc+1)%4;
+  const d='.'.repeat(dc);
+  const d1=document.getElementById('dots');
+  const d2=document.getElementById('dots2');
+  if(d1)d1.textContent=d;
+  if(d2)d2.textContent=d;
+},500);
+
+function updateBar(pct){
+  const fill=document.getElementById('syncfill');
+  const coin=document.getElementById('synccoin');
+  const hole=document.getElementById('synchole');
+  const syncpct=document.getElementById('syncpct');
+  const syncstatus=document.getElementById('syncstatus');
+
+  syncpct.textContent=pct.toFixed(2)+'%';
+  fill.style.width=pct+'%';
+
+  if(pct>=99.999){
+    coin.style.left='calc(100% - 22px)';
+    coin.style.width='4px';
+    coin.style.height='4px';
+    coin.style.fontSize='0px';
+    coin.style.opacity='0';
+    coin.style.boxShadow='none';
+    hole.style.boxShadow='0 0 0 3px #00e676,0 0 20px 8px rgba(0,230,118,.5),0 0 40px 16px rgba(0,200,80,.3)';
+    syncstatus.innerHTML='✓ Chain fully absorbed — ready to mine';
+    syncstatus.style.color='#00e676';
+  } else {
+    coin.style.left=`calc(${pct}% - ${pct*0.44}px)`;
+    coin.style.width='28px';
+    coin.style.height='28px';
+    coin.style.fontSize='13px';
+    coin.style.opacity='1';
+    coin.style.boxShadow='0 0 0 2px rgba(0,168,70,.3)';
+    coin.textContent='₿';
+    hole.style.boxShadow='0 0 0 2px #2a0066,0 0 10px 3px #4400aa,0 0 24px 8px rgba(100,0,200,.25)';
+
+    let msg='',color='#e040fb';
+    if(pct>=99){msg='Event horizon reached — finalizing';color='#aa60ff';}
+    else if(pct>=50){msg=`Syncing... ${pct.toFixed(2)}% — gravitational pull increasing`;color='#9060ff';}
+    else{msg=`Syncing... ${pct.toFixed(2)}% complete`;}
+    syncstatus.innerHTML=msg+'<span id="dots">'+dc_str+'</span>';
+    syncstatus.style.color=color;
+  }
 }
-function fmtSize(b){
-  if(!b)return"—";
-  if(b>=1e12)return(b/1e12).toFixed(2)+" TB";
-  if(b>=1e9)return(b/1e9).toFixed(2)+" GB";
-  return(b/1e6).toFixed(2)+" MB";
-}
+
+let dc_str='';
+setInterval(()=>{dc_str='.'.repeat(dc)},500);
 
 async function poll(){
   try{
-    // Pull from BCHN REST API via nginx proxy
-    const[chainRes,peerRes]=await Promise.all([
-      fetch("/rest/chaininfo.json"),
-      fetch("/rest/getutxos.json?checkmempool=false") // won't work but we try
-    ]);
-
-    if(!chainRes.ok) throw new Error("Node REST API returned "+chainRes.status);
+    const[chainRes]=await Promise.all([fetch('/rest/chaininfo.json')]);
+    if(!chainRes.ok)throw new Error('REST API '+chainRes.status);
     const chain=await chainRes.json();
 
-    const pct=((chain.verificationprogress??0)*100);
-    const pctStr=pct>=99.99?"100.00":pct.toFixed(2);
-    const synced=chain.initialblockdownload===false&&pct>=99.99;
+    const pct=(chain.verificationprogress??0)*100;
+    const synced=chain.initialblockdownload===false&&pct>=99.999;
 
-    document.getElementById("syncpct").textContent=pctStr+"%";
-    document.getElementById("syncbar").style.width=Math.min(pct,100)+"%";
-    document.getElementById("syncstatus").textContent=synced
-      ? "✓ Fully synced — ready to mine"
-      : "Syncing... "+pctStr+"% complete";
+    updateBar(Math.min(pct,100));
 
-    document.getElementById("blocks").textContent=(chain.blocks??0).toLocaleString();
-    document.getElementById("headers").textContent="Headers: "+(chain.headers??0).toLocaleString();
-    document.getElementById("difficulty").textContent=fmtDiff(chain.difficulty);
-    document.getElementById("chainsize").textContent=fmtSize(chain.size_on_disk);
+    document.getElementById('blocks').textContent=(chain.blocks??0).toLocaleString();
+    document.getElementById('headers').textContent='Headers: '+(chain.headers??0).toLocaleString();
+    document.getElementById('difficulty').textContent=fmtDiff(chain.difficulty);
+    document.getElementById('chainsize').textContent=fmtSize(chain.size_on_disk);
+    document.getElementById('peers').textContent='—';
 
-    // Peers from chaininfo doesn't have it — show connection count if available
-    document.getElementById("peers").textContent="—";
-
-    const rb=document.getElementById("readybox");
-    const rv=document.getElementById("readyval");
+    const rb=document.getElementById('readybox');
+    const rv=document.getElementById('readyval');
     if(synced){
-      rb.classList.add("synced");
-      rv.textContent="✓ Ready to Mine";
-      document.getElementById("readysub").textContent="Node is fully synced. Connect Miningcore to 127.0.0.1:8332";
+      rb.classList.add('synced'); rb.style.borderLeftColor=''; rb.style.borderColor=''; rb.style.background='';
+      rv.innerHTML='✓ Ready to Mine';
+      document.getElementById('readysub').textContent='Node fully synced. Point Miningcore at 127.0.0.1:8332';
     } else {
-      rb.classList.remove("synced");
-      rv.textContent="Syncing — "+pctStr+"% complete";
-      document.getElementById("readysub").textContent="Mining will not produce valid work until sync is complete";
+      rb.classList.remove('synced'); rb.style.borderLeftColor='#ff4444'; rb.style.borderColor='rgba(255,68,68,.3)'; rb.style.background='rgba(100,0,0,.07)';
+      rv.innerHTML='Syncing — '+pct.toFixed(2)+'% complete<span id="dots2">'+dc_str+'</span>';
+      document.getElementById('readysub').textContent='26a0 Do not run the AM BCH Solo Pool until sync is complete — miners will receive invalid work';
     }
 
-    document.getElementById("stext").textContent="Node online · Updated just now";
-    document.getElementById("sdot").style.cssText="background:#e040fb;box-shadow:0 0 10px #e040fb";
-    document.getElementById("err").style.display="none";
+    document.getElementById('stext').textContent='Node online · Updated just now';
+    document.getElementById('sdot').style.cssText='background:#e040fb;box-shadow:0 0 10px #e040fb';
+    document.getElementById('err').style.display='none';
 
   } catch(e){
-    document.getElementById("stext").textContent="Node unreachable";
-    document.getElementById("sdot").style.cssText="background:#ff4444;box-shadow:0 0 8px #ff4444";
-    const eb=document.getElementById("err");
-    eb.style.display="block";
-    eb.textContent="Cannot reach BCHN REST API — "+e.message;
+    document.getElementById('stext').textContent='Node unreachable';
+    document.getElementById('sdot').style.cssText='background:#ff4444;box-shadow:0 0 8px #ff4444';
+    document.getElementById('err').style.display='block';
+    document.getElementById('err').textContent='Cannot reach BCHN REST API — '+e.message;
+    updateBar(0);
   }
 }
 poll();
@@ -177,40 +221,15 @@ setInterval(poll,15000);
 
 // Twinkling stars
 (function(){
-  const c=document.getElementById("stars");
-  const ctx=c.getContext("2d");
+  const c=document.getElementById('stars');
+  const ctx=c.getContext('2d');
   let stars=[],t=0;
   function rng(seed){let v=seed>>>0;return function(){v^=v<<13;v^=v>>17;v^=v<<5;return(v>>>0)/0xffffffff}}
-  function build(){
-    const r=rng(42);const W=c.width,H=c.height;stars=[];
-    for(let i=0;i<200;i++){
-      const x=r()*W,y=r()*H,v=r();
-      const inBlue=x<W*0.35,inMag=x>W*0.30&&x<W*0.65;
-      const col=inMag?"255,"+(130+Math.floor(r()*110))+",235":inBlue?(150+Math.floor(r()*90))+","+(175+Math.floor(r()*65))+",255":"255,255,255";
-      stars.push({x,y,col,sz:v>0.955?2.0+r()*1.8:v>0.88?1.0+r()*0.9:0.35+r()*0.65,spike:v>0.955,sl:v>0.955?20+r()*28:7+r()*13,ph:r()*Math.PI*2,sp:0.35+r()*0.85,ba:v>0.955?0.55+r()*0.45:v>0.88?0.2+r()*0.55:0.06+r()*0.45});
-    }
-  }
-  function spk(x,y,r,sl,col,a){
-    ctx.save();ctx.globalAlpha=a;ctx.fillStyle="rgba("+col+",1)";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
-    for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){
-      const g=ctx.createLinearGradient(x,y,x+dx*sl,y+dy*sl);
-      g.addColorStop(0,"rgba("+col+",1)");g.addColorStop(1,"rgba(0,0,0,0)");
-      ctx.strokeStyle=g;ctx.lineWidth=r*0.45;ctx.lineCap="round";
-      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+dx*sl,y+dy*sl);ctx.stroke();
-    }
-    ctx.restore();
-  }
-  function frame(){
-    t+=0.012;ctx.clearRect(0,0,c.width,c.height);
-    for(const s of stars){
-      const a=s.ba*(0.4+0.6*Math.sin(t*s.sp+s.ph));
-      if(s.spike)spk(s.x,s.y,s.sz,s.sl,s.col,a);
-      else{ctx.globalAlpha=a;ctx.fillStyle="rgba("+s.col+",1)";ctx.beginPath();ctx.arc(s.x,s.y,s.sz,0,Math.PI*2);ctx.fill()}
-    }
-    ctx.globalAlpha=1;requestAnimationFrame(frame);
-  }
-  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;build()}
-  resize();frame();window.addEventListener("resize",resize);
+  function build(){const r=rng(42);const W=c.width,H=c.height;stars=[];for(let i=0;i<200;i++){const x=r()*W,y=r()*H,v=r();const inBlue=x<W*0.35,inMag=x>W*0.30&&x<W*0.65;const col=inMag?"255,"+(130+Math.floor(r()*110))+",235":inBlue?(150+Math.floor(r()*90))+","+(175+Math.floor(r()*65))+",255":"255,255,255";stars.push({x,y,col,sz:v>0.955?2.0+r()*1.8:v>0.88?1.0+r()*0.9:0.35+r()*0.65,spike:v>0.955,sl:v>0.955?20+r()*28:7+r()*13,ph:r()*Math.PI*2,sp:0.35+r()*0.85,ba:v>0.955?0.55+r()*0.45:v>0.88?0.2+r()*0.55:0.06+r()*0.45});}}
+  function spk(x,y,r,sl,col,a){ctx.save();ctx.globalAlpha=a;ctx.fillStyle="rgba("+col+",1)";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const g=ctx.createLinearGradient(x,y,x+dx*sl,y+dy*sl);g.addColorStop(0,"rgba("+col+",1)");g.addColorStop(1,"rgba(0,0,0,0)");ctx.strokeStyle=g;ctx.lineWidth=r*0.45;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+dx*sl,y+dy*sl);ctx.stroke();}ctx.restore();}
+  function frame(){t+=0.012;ctx.clearRect(0,0,c.width,c.height);for(const s of stars){const a=s.ba*(0.4+0.6*Math.sin(t*s.sp+s.ph));if(s.spike)spk(s.x,s.y,s.sz,s.sl,s.col,a);else{ctx.globalAlpha=a;ctx.fillStyle="rgba("+s.col+",1)";ctx.beginPath();ctx.arc(s.x,s.y,s.sz,0,Math.PI*2);ctx.fill();}}ctx.globalAlpha=1;requestAnimationFrame(frame);}
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;build();}
+  resize();frame();window.addEventListener('resize',resize);
 })();
 </script>
 </body>
