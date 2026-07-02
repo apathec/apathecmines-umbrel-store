@@ -1,34 +1,38 @@
+version: "3.7"
 services:
-
-  bchn:
-    image: zquestz/bitcoin-cash-node:29.0.0
-    container_name: apathecmines-bchn-node
-    restart: unless-stopped
-    network_mode: host
+  app_proxy:
+    environment:
+      APP_HOST: apathecmines-bch-node_web_1
+      APP_PORT: 8080
+  web:
+    image: amir20/dozzle:latest
     volumes:
-      - bchn-node-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: on-failure
+    depends_on:
+      - node
+  node:
+    image: zquestz/bitcoin-cash-node:29.0.0
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/.bitcoincash:/data
+    ports:
+      - 8334:8333
+      - 9002:8332
+      - 7002:7002
     command: >
       bitcoind
       -datadir=/data
+      -printtoconsole
       -server=1
       -txindex=1
       -listen=1
       -rest=1
-      -rpcallowip=127.0.0.1
-      -rpcbind=127.0.0.1
-      -printtoconsole
-
-  web:
-    image: nginx:alpine
-    container_name: apathecmines-node-web
-    restart: unless-stopped
-    ports:
-      - "3081:80"
-    volumes:
-      - ${APP_DATA_DIR}/web:/usr/share/nginx/html:ro
-      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-
-volumes:
-  bchn-node-data:
-    external: true
-    name: bch-solo-pool_bchn-data
+      -zmqpubhashblock=tcp://127.0.0.1:7002
+      -rpcbind=0.0.0.0
+      -rpcport=8332
+      -rpcallowip=0.0.0.0/0
+      -port=8333
+      -rpcuser=apathecpool
+      -rpcpassword=Xk9mT4vQp2wL7nRz8Hc3jYf6sDb1u
