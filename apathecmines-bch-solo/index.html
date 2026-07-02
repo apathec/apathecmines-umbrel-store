@@ -123,7 +123,7 @@ async function poll(){
     // Live miners — count and sum hashrate directly from miners endpoint
     if(minersRes.ok){
       const md=await minersRes.json();
-      const miners=Array.isArray(md)?md:(md.result??[]);
+      const miners=(Array.isArray(md)?md:(md.result??[])).filter(m=>(m.hashrate??0)>0);
       const count=miners.length;
       const totalHr=miners.reduce((sum,m)=>sum+(m.hashrate??0),0);
       document.getElementById("poolhr").textContent=fmtHr(totalHr);
