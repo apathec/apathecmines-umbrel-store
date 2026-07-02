@@ -1,24 +1,25 @@
 manifestVersion: 1
 id: apathecmines-bch-node
-name: ApathecMines BCH Node
-tagline: Bitcoin Cash full node. Run standalone or pair with the ApathecMines BCH Solo Pool.
+name: AM BCH Node
+tagline: Bitcoin Cash full node. Run standalone or pair with AM BCH Solo.
 category: bitcoin
 version: "1.0.0"
-port: 3081
-description: A fully validating Bitcoin Cash node (BCHN v29.0.0). Run it standalone to contribute to the BCH network, or pair it with the ApathecMines BCH Solo Pool app for solo mining. Includes a live node status dashboard showing sync progress, connected peers, block height, and network info.
+icon: https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-bch-node/icon.png
+description: A fully validating Bitcoin Cash node (BCHN v29.0.0). Run it standalone to contribute to the BCH network, or pair it with the AM BCH Solo pool app for solo mining. Includes a live galaxy-themed node status dashboard showing sync progress, connected peers, block height, and network info.
 developer: ApathecMines
 website: https://apathecmines.com
-submitter: ApathecMines
-submission: https://github.com/Apathec/apathecmines-bch-solo
+dependencies: []
 repo: https://github.com/Apathec/apathecmines-bch-solo
 support: https://github.com/Apathec/apathecmines-bch-solo/issues
+port: 3081
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
+  - https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-bch-node/1.jpg
+  - https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-bch-node/2.jpg
+  - https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-bch-node/3.jpg
 releaseNotes: >-
   1.0.0 - Initial Release
-dependencies: []
 path: ""
 defaultUsername: ""
 defaultPassword: ""
+submitter: ApathecMines
+submission: https://github.com/Apathec/apathecmines-bch-solo
