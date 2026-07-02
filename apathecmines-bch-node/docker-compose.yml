@@ -6,10 +6,10 @@ services:
     restart: unless-stopped
     network_mode: host
     volumes:
-      - bchn-node-data:/root/.bitcoin
+      - bchn-node-data:/data
     command: >
       bitcoind
-      -datadir=/root/.bitcoin
+      -datadir=/data
       -server=1
       -txindex=1
       -listen=1
