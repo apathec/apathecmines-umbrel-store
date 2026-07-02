@@ -12,27 +12,13 @@ services:
     depends_on:
       - node
   node:
-    image: zquestz/bitcoin-cash-node:29.0.0
+    image: theretromike/nodes:bitcoincash
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_DATA_DIR}/.bitcoincash:/data
+      - ${APP_DATA_DIR}/.bitcoincash:/root/.bitcoin
     ports:
-      - 8334:8333
-      - 9002:8332
+      - 8334:8334
+      - 9002:9002
       - 7002:7002
-    command: >
-      bitcoind
-      -datadir=/data
-      -printtoconsole
-      -server=1
-      -txindex=1
-      -listen=1
-      -rest=1
-      -zmqpubhashblock=tcp://127.0.0.1:7002
-      -rpcbind=0.0.0.0
-      -rpcport=8332
-      -rpcallowip=0.0.0.0/0
-      -port=8333
-      -rpcuser=apathecpool
-      -rpcpassword=Xk9mT4vQp2wL7nRz8Hc3jYf6sDb1u
+    entrypoint: "bitcoind -printtoconsole -server -txindex=1 -zmqpubhashblock=tcp://127.0.0.1:7002 -rpcbind=0.0.0.0 -rpcport=9002 -rpcallowip=0.0.0.0/0 -port=8334 -rpcuser=apathecpool -rpcpassword=Xk9mT4vQp2wL7nRz8Hc3jYf6sDb1u"
