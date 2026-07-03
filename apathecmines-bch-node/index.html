@@ -190,7 +190,7 @@ async function poll(){
     document.getElementById('headers').textContent='Headers: '+(chain.headers??0).toLocaleString();
     document.getElementById('difficulty').textContent=fmtDiff(chain.difficulty);
     document.getElementById('chainsize').textContent=fmtSize(chain.size_on_disk);
-    document.getElementById('peers').textContent='—';
+    try{const pr=await fetch('/rpc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'1.0',method:'getnetworkinfo',params:[]})});const prd=await pr.json();document.getElementById('peers').textContent=prd.result.connections??'—';}catch(e){document.getElementById('peers').textContent='—';}
 
     const rb=document.getElementById('readybox');
     const rv=document.getElementById('readyval');
