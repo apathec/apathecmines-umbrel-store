@@ -1,25 +1,31 @@
 manifestVersion: 1
 id: apathecmines-bch-node
 name: AM BCH Node
-tagline: Bitcoin Cash full node. Run standalone or pair with AM BCH Solo.
+tagline: Full Bitcoin Cash node powered by BCHN — txindex enabled, no pruning, ready for solo mining.
+icon: https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-bch-node/icon.png
 category: bitcoin
 version: "1.0.0"
-icon: https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-bch-node/icon.png
-description: A fully validating Bitcoin Cash node (BCHN v29.0.0). Run it standalone to contribute to the BCH network, or pair it with the AM BCH Solo pool app for solo mining. Includes a live galaxy-themed node status dashboard showing sync progress, connected peers, block height, and network info.
+port: 3081
+description: |
+  A full Bitcoin Cash node running BCHN v29.0.0 with transaction indexing (txindex=1), REST API, and no pruning.
+
+  Provides RPC, ZMQ, and P2P services for the ApathecMines solo mining suite. Features a galaxy-themed sync status dashboard with black hole progress visualization.
+
+  Ports: RPC 9002 · ZMQ 7002 · P2P 8334
+
+  Part of the ApathecMines suite — install AM BCH Solo on top of this node to start solo mining BCH.
 developer: ApathecMines
 website: https://apathecmines.com
-dependencies: []
-repo: https://github.com/Apathec/apathecmines-bch-solo
-support: https://github.com/Apathec/apathecmines-bch-solo/issues
-port: 3081
+repo: https://github.com/apathec/apathecmines-umbrel-store
+support: https://github.com/apathec/apathecmines-umbrel-store/issues
 gallery:
-  - https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-bch-node/1.jpg
-  - https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-bch-node/2.jpg
-  - https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-bch-node/3.jpg
+  - https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-bch-node/gallery-1.png
+  - https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-bch-node/gallery-2.png
 releaseNotes: >-
-  1.0.0 - Initial Release
+  Initial release. Full BCHN v29.0.0 node with galaxy-themed sync dashboard and Dozzle log viewer.
+dependencies: []
 path: ""
 defaultUsername: ""
 defaultPassword: ""
 submitter: ApathecMines
-submission: https://github.com/Apathec/apathecmines-bch-solo
+submission: https://github.com/apathec/apathecmines-umbrel-store
