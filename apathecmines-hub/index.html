@@ -90,11 +90,52 @@ html,body{min-height:100vh;background:#02010a;overflow-x:hidden}
 .miners-label{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#fff;margin-bottom:10px}
 .miners-table{display:flex;flex-direction:column;gap:2px}
 .miners-header{display:grid;grid-template-columns:1fr 120px 80px;gap:8px;padding:6px 10px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#706c88}
-.miner-row{display:grid;grid-template-columns:1fr 120px 80px;gap:8px;padding:8px 10px;background:rgba(10,8,26,0.4);border-radius:6px;font-size:13px;align-items:center}
+.miner-row{display:grid;grid-template-columns:1fr 120px 80px;gap:8px;padding:8px 10px;background:rgba(10,8,26,0.4);border-radius:6px;font-size:13px;align-items:center;cursor:pointer;transition:background 0.2s}
+.miner-row:hover{background:rgba(224,64,251,0.08)}
+.miner-row.active{background:rgba(224,64,251,0.12);border:1px solid rgba(224,64,251,0.2)}
 .mr-wallet{color:#e040fb;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mr-hashrate{color:#fff;font-weight:700;text-align:right}
 .mr-shares{color:#88c8ff;text-align:right}
 .mh-hashrate,.mh-shares{text-align:right}
+
+/* Miner detail panel */
+.miner-detail{background:rgba(10,8,26,0.6);border:1px solid rgba(224,64,251,0.15);border-radius:10px;padding:20px;margin:8px 0;animation:slideDown 0.3s ease}
+@keyframes slideDown{from{opacity:0;max-height:0}to{opacity:1;max-height:800px}}
+.md-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.md-address{font-size:13px;color:#e040fb;font-weight:700;word-break:break-all}
+.md-close{background:none;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:4px 10px;font-family:'Space Mono',monospace;font-size:11px;color:#fff;cursor:pointer}
+.md-close:hover{border-color:#e040fb;color:#e040fb}
+.md-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.md-stat{background:rgba(18,14,36,0.5);border-radius:8px;padding:10px}
+.md-stat .slabel{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#706c88;margin-bottom:3px}
+.md-stat .sval{font-size:16px;font-weight:700;color:#fff}
+.md-stat .sval.purple{color:#e040fb}
+.md-stat .sval.blue{color:#88c8ff}
+.md-stat .sval.green{color:#00e676}
+
+/* Hashrate chart */
+.md-chart-wrap{margin-bottom:16px}
+.md-chart-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#fff;margin-bottom:8px}
+.md-chart{width:100%;height:160px;background:rgba(18,14,36,0.4);border-radius:8px;border:1px solid rgba(224,64,251,0.08)}
+
+/* Workers table */
+.md-section-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#fff;margin:14px 0 8px}
+.md-workers{display:flex;flex-direction:column;gap:2px}
+.md-worker-header{display:grid;grid-template-columns:1fr 100px 80px 100px;gap:8px;padding:5px 10px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#706c88}
+.md-worker-row{display:grid;grid-template-columns:1fr 100px 80px 100px;gap:8px;padding:7px 10px;background:rgba(18,14,36,0.4);border-radius:5px;font-size:12px}
+.md-worker-row .wname{color:#fff}
+.md-worker-row .whr{color:#e040fb;font-weight:700;text-align:right}
+.md-worker-row .wsps{color:#88c8ff;text-align:right}
+.md-worker-row .wlast{color:#706c88;text-align:right}
+
+/* Payments table */
+.md-payments{display:flex;flex-direction:column;gap:2px}
+.md-pay-header{display:grid;grid-template-columns:1fr 120px 120px;gap:8px;padding:5px 10px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#706c88}
+.md-pay-row{display:grid;grid-template-columns:1fr 120px 120px;gap:8px;padding:7px 10px;background:rgba(18,14,36,0.4);border-radius:5px;font-size:12px}
+.md-pay-row .pamount{color:#00e676;font-weight:700}
+.md-pay-row .ptx{color:#e040fb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.md-pay-row .pdate{color:#706c88;text-align:right}
+.md-no-data{font-size:12px;color:#706c88;text-align:center;padding:12px 0}
 .pending-msg{font-size:16px;color:#ffa500;text-align:center;padding:8px 0}
 .pending-msg .sub{font-size:14px;color:#fff;margin-top:6px}
 .footer{margin-top:32px;display:flex;gap:16px;flex-wrap:wrap}
@@ -214,13 +255,14 @@ function renderCoin(coin,node,pool){
           <span class="mh-hashrate">Hashrate</span>
           <span class="mh-shares">Shares/s</span>
         </div>
-        ${pool.minerList.map(m=>`
-        <div class="miner-row">
+        ${pool.minerList.map((m,i)=>`
+        <div class="miner-row" data-pool="${coin.poolId}" data-address="${m.miner||''}" data-idx="${i}">
           <span class="mr-wallet" title="${m.miner||''}">${(m.miner||'').substring(0,16)}…${(m.miner||'').slice(-8)}</span>
           <span class="mr-hashrate">${fmtHash(m.hashrate||0)}</span>
           <span class="mr-shares">${(m.sharesPerSecond||0).toFixed(2)}</span>
         </div>`).join('')}
       </div>
+      <div id="miner-detail-slot"></div>
     </div>`:''}`;
   } else if(node.online){
     body=`<div class="sync-bar-wrap"><div class="sync-bar-fill" style="width:${Math.min(node.pct,100)}%"></div><div class="sync-bar-text">${node.pct.toFixed(2)}%</div></div>
@@ -239,6 +281,183 @@ function renderCoin(coin,node,pool){
   }
   return card;
 }
+
+// ─── Miner detail panel ───
+function fmtTime(ts){
+  if(!ts)return'—';
+  const d=new Date(ts);
+  const now=Date.now();
+  const diff=Math.floor((now-d.getTime())/1000);
+  if(diff<60)return diff+'s ago';
+  if(diff<3600)return Math.floor(diff/60)+'m ago';
+  if(diff<86400)return Math.floor(diff/3600)+'h ago';
+  return d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+
+function fmtDate(ts){
+  if(!ts)return'—';
+  const d=new Date(ts);
+  return d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+
+function drawChart(canvas,perfData){
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width=canvas.offsetWidth;
+  const H=canvas.height=canvas.offsetHeight;
+  const pad={t:20,r:15,b:25,l:60};
+  const cw=W-pad.l-pad.r;
+  const ch=H-pad.t-pad.b;
+
+  ctx.clearRect(0,0,W,H);
+
+  if(!perfData||perfData.length===0){
+    ctx.fillStyle='#706c88';ctx.font='12px Space Mono';ctx.textAlign='center';
+    ctx.fillText('No performance data yet',W/2,H/2);return;
+  }
+
+  const points=perfData.map(p=>({t:new Date(p.created),hr:p.workers?Object.values(p.workers).reduce((s,w)=>s+(w.hashrate||0),0):(p.hashrate||0)}));
+  const maxHr=Math.max(...points.map(p=>p.hr),1);
+  const minT=points[0].t.getTime();
+  const maxT=points[points.length-1].t.getTime();
+  const tRange=maxT-minT||1;
+
+  // Grid lines
+  ctx.strokeStyle='rgba(224,64,251,0.06)';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+ch*(1-i/4);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle='#706c88';ctx.font='10px Space Mono';ctx.textAlign='right';
+    ctx.fillText(fmtHash(maxHr*i/4).replace(' ',''),pad.l-6,y+3);
+  }
+
+  // Line
+  ctx.beginPath();
+  ctx.strokeStyle='#e040fb';ctx.lineWidth=2;ctx.lineJoin='round';
+  points.forEach((p,i)=>{
+    const x=pad.l+cw*((p.t.getTime()-minT)/tRange);
+    const y=pad.t+ch*(1-p.hr/maxHr);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Fill
+  const lastPt=points[points.length-1];
+  ctx.lineTo(pad.l+cw*((lastPt.t.getTime()-minT)/tRange),pad.t+ch);
+  ctx.lineTo(pad.l,pad.t+ch);
+  ctx.closePath();
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+ch);
+  grad.addColorStop(0,'rgba(224,64,251,0.2)');grad.addColorStop(1,'rgba(224,64,251,0)');
+  ctx.fillStyle=grad;ctx.fill();
+
+  // Time labels
+  ctx.fillStyle='#706c88';ctx.font='10px Space Mono';ctx.textAlign='center';
+  const step=Math.max(1,Math.floor(points.length/5));
+  for(let i=0;i<points.length;i+=step){
+    const x=pad.l+cw*((points[i].t.getTime()-minT)/tRange);
+    ctx.fillText(points[i].t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),x,H-4);
+  }
+}
+
+async function showMinerDetail(poolId,address,slotEl){
+  // Close if already showing this miner
+  const existing=slotEl.querySelector('.miner-detail');
+  if(existing&&existing.dataset.address===address){slotEl.innerHTML='';document.querySelectorAll('.miner-row.active').forEach(r=>r.classList.remove('active'));return;}
+
+  slotEl.innerHTML='<div class="miner-detail" style="text-align:center;padding:30px"><div class="loading"><div class="spinner"></div>Loading miner data...</div></div>';
+
+  try{
+    const[minerRes,perfRes,payRes]=await Promise.all([
+      fetch('/api/pools/'+poolId+'/miners/'+encodeURIComponent(address)),
+      fetch('/api/pools/'+poolId+'/miners/'+encodeURIComponent(address)+'/performance'),
+      fetch('/api/pools/'+poolId+'/miners/'+encodeURIComponent(address)+'/payments?pageSize=20')
+    ]);
+
+    let minerData={},perfData=[],payData=[];
+    if(minerRes.ok)minerData=await minerRes.json();
+    if(perfRes.ok){const pd=await perfRes.json();perfData=pd.stats||pd||[];}
+    if(payRes.ok)payData=await payRes.json()||[];
+
+    // Workers
+    const workers=minerData.performance?.workers||{};
+    const workerList=Object.entries(workers).map(([name,w])=>({name,hashrate:w.hashrate||0,sharesPerSecond:w.sharesPerSecond||0}));
+    const lastSeen=minerData.lastPaymentLink||minerData.lastPayment||null;
+
+    let html=`<div class="miner-detail" data-address="${address}">
+      <div class="md-header">
+        <div class="md-address">${address}</div>
+        <button class="md-close" onclick="this.closest('.miner-detail').remove();document.querySelectorAll('.miner-row.active').forEach(r=>r.classList.remove('active'))">Close</button>
+      </div>
+      <div class="md-stats">
+        <div class="md-stat"><div class="slabel">Hashrate</div><div class="sval purple">${fmtHash(minerData.hashrate||minerData.performance?.hashrate||0)}</div></div>
+        <div class="md-stat"><div class="slabel">Shares/s</div><div class="sval blue">${(minerData.sharesPerSecond||minerData.performance?.sharesPerSecond||0).toFixed(2)}</div></div>
+        <div class="md-stat"><div class="slabel">Workers</div><div class="sval">${workerList.length||1}</div></div>
+        <div class="md-stat"><div class="slabel">Pending Balance</div><div class="sval green">${(minerData.pendingBalance||0).toFixed(6)}</div></div>
+        <div class="md-stat"><div class="slabel">Total Paid</div><div class="sval green">${(minerData.totalPaid||0).toFixed(6)}</div></div>
+        <div class="md-stat"><div class="slabel">Last Payment</div><div class="sval">${fmtTime(minerData.lastPayment)}</div></div>
+      </div>
+
+      <div class="md-chart-wrap">
+        <div class="md-chart-label">Hashrate History</div>
+        <canvas class="md-chart" id="chart-${address.substring(0,8)}"></canvas>
+      </div>`;
+
+    // Workers section
+    if(workerList.length>0){
+      html+=`<div class="md-section-label">Workers</div>
+      <div class="md-workers">
+        <div class="md-worker-header"><span>Name</span><span style="text-align:right">Hashrate</span><span style="text-align:right">Shares/s</span><span style="text-align:right">Status</span></div>
+        ${workerList.map(w=>`<div class="md-worker-row">
+          <span class="wname">${w.name||'default'}</span>
+          <span class="whr">${fmtHash(w.hashrate)}</span>
+          <span class="wsps">${w.sharesPerSecond.toFixed(2)}</span>
+          <span class="wlast" style="color:${w.hashrate>0?'#00e676':'#ff4444'}">${w.hashrate>0?'Online':'Offline'}</span>
+        </div>`).join('')}
+      </div>`;
+    }
+
+    // Payments section
+    html+=`<div class="md-section-label">Recent Payments</div>`;
+    if(Array.isArray(payData)&&payData.length>0){
+      html+=`<div class="md-payments">
+        <div class="md-pay-header"><span>TX</span><span style="text-align:right">Amount</span><span style="text-align:right">Date</span></div>
+        ${payData.map(p=>`<div class="md-pay-row">
+          <span class="ptx" title="${p.transactionConfirmationData||''}">${(p.transactionConfirmationData||'—').substring(0,24)}…</span>
+          <span class="pamount" style="text-align:right">${(p.amount||0).toFixed(6)}</span>
+          <span class="pdate">${fmtDate(p.created)}</span>
+        </div>`).join('')}
+      </div>`;
+    } else {
+      html+=`<div class="md-no-data">No payments yet</div>`;
+    }
+
+    html+=`</div>`;
+    slotEl.innerHTML=html;
+
+    // Draw chart after DOM update
+    setTimeout(()=>{
+      const canvas=document.getElementById('chart-'+address.substring(0,8));
+      if(canvas)drawChart(canvas,perfData);
+    },50);
+
+  }catch(e){
+    slotEl.innerHTML=`<div class="miner-detail"><div class="md-no-data">Error loading miner data: ${e.message}</div></div>`;
+  }
+}
+
+// Delegate clicks on miner rows
+document.addEventListener('click',function(e){
+  const row=e.target.closest('.miner-row');
+  if(!row)return;
+  e.stopPropagation();
+  const poolId=row.dataset.pool;
+  const address=row.dataset.address;
+  if(!poolId||!address)return;
+  const slot=row.closest('.miners-section').querySelector('#miner-detail-slot');
+  if(!slot)return;
+  document.querySelectorAll('.miner-row.active').forEach(r=>r.classList.remove('active'));
+  row.classList.add('active');
+  showMinerDetail(poolId,address,slot);
+});
 
 async function poll(){
   const container=document.getElementById('coins');
