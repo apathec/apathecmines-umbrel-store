@@ -380,6 +380,8 @@ async function showMinerDetail(poolId,address,slotEl){
     // Workers
     const workers=minerData.performance?.workers||{};
     const workerList=Object.entries(workers).map(([name,w])=>({name,hashrate:w.hashrate||0,sharesPerSecond:w.sharesPerSecond||0}));
+    const totalHr=workerList.reduce((s,w)=>s+w.hashrate,0)||minerData.hashrate||0;
+    const totalSps=workerList.reduce((s,w)=>s+w.sharesPerSecond,0)||minerData.sharesPerSecond||0;
     const lastSeen=minerData.lastPaymentLink||minerData.lastPayment||null;
 
     let html=`<div class="miner-detail" data-address="${address}">
@@ -388,8 +390,8 @@ async function showMinerDetail(poolId,address,slotEl){
         <button class="md-close" onclick="this.closest('.miner-detail').remove();document.querySelectorAll('.miner-row.active').forEach(r=>r.classList.remove('active'))">Close</button>
       </div>
       <div class="md-stats">
-        <div class="md-stat"><div class="slabel">Hashrate</div><div class="sval purple">${fmtHash(minerData.hashrate||minerData.performance?.hashrate||0)}</div></div>
-        <div class="md-stat"><div class="slabel">Shares/s</div><div class="sval blue">${(minerData.sharesPerSecond||minerData.performance?.sharesPerSecond||0).toFixed(2)}</div></div>
+        <div class="md-stat"><div class="slabel">Hashrate</div><div class="sval purple">${fmtHash(totalHr)}</div></div>
+        <div class="md-stat"><div class="slabel">Shares/s</div><div class="sval blue">${totalSps.toFixed(2)}</div></div>
         <div class="md-stat"><div class="slabel">Workers</div><div class="sval">${workerList.length||1}</div></div>
         <div class="md-stat"><div class="slabel">Pending Balance</div><div class="sval green">${(minerData.pendingBalance||0).toFixed(6)}</div></div>
         <div class="md-stat"><div class="slabel">Total Paid</div><div class="sval green">${(minerData.totalPaid||0).toFixed(6)}</div></div>
