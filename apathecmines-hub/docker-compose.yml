@@ -1,0 +1,48 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: apathecmines-hub_web_1
+      APP_PORT: 80
+
+  web:
+    image: nginx:1.25-alpine
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/web:/usr/share/nginx/html:ro
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - miningcore
+
+  miningcore:
+    image: theretromike/miningcore
+    restart: on-failure
+    network_mode: host
+    volumes:
+      - ${APP_DATA_DIR}/config.json:/app/config.json:ro
+      - ${APP_DATA_DIR}/coins.json:/app/build/coins.json:ro
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15-alpine
+    restart: on-failure
+    environment:
+      POSTGRES_USER: miningcore
+      POSTGRES_PASSWORD: Qm7vRt2pXk9LbWc4NyJh8FzD3sUa6Tg1
+      POSTGRES_DB: miningcore
+    volumes:
+      - ${APP_DATA_DIR}/pgdata:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432"
+
+  dozzle:
+    image: amir20/dozzle:v8.12.8@sha256:8ff3115c9c9dd7576839df6f2575de345ca7cafa398cf2496f1f19c31d862ac1
+    restart: on-failure
+    environment:
+      DOZZLE_BASE: /logs
+      DOZZLE_NO_ANALYTICS: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
