@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApathecMines — Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:#02010a;overflow-x:hidden;font-family:'Space Mono',monospace;color:#e0dfe8}
+canvas#stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+.app{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:48px 24px 64px}
+
+/* Header */
+.eyebrow{font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#ffffff;margin-bottom:8px}
+h1.title{font-size:clamp(28px,6vw,42px);font-weight:700;color:#fff;margin-bottom:6px}
+h1.title em{font-style:normal;color:#e040fb;text-shadow:0 0 18px rgba(224,64,251,0.5)}
+.subtitle{font-size:15px;color:#ffffff;margin-bottom:28px}
+
+/* Stratum box */
+.stratum-box{background:rgba(18,14,36,0.7);border:1px solid rgba(224,64,251,0.15);border-radius:10px;padding:14px 18px;margin-bottom:32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.stratum-box .slabel{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#ffffff}
+.stratum-box .sval{font-size:16px;color:#e040fb;font-weight:700;word-break:break-all}
+.stratum-box .copy-btn{background:rgba(224,64,251,0.15);border:1px solid rgba(224,64,251,0.3);border-radius:6px;padding:4px 10px;font-family:'Space Mono',monospace;font-size:11px;color:#e040fb;cursor:pointer;transition:all 0.2s}
+.stratum-box .copy-btn:hover{background:rgba(224,64,251,0.3)}
+
+/* Section label */
+.section-label{font-size:14px;letter-spacing:2px;text-transform:uppercase;color:#ffffff;margin:0 0 16px;border-bottom:1px solid rgba(224,64,251,0.08);padding-bottom:6px}
+
+/* Coin cards */
+.coins{display:grid;gap:16px;margin-bottom:32px}
+.coin-card{background:rgba(18,14,36,0.7);border:1px solid rgba(224,64,251,0.12);border-radius:14px;padding:24px;backdrop-filter:blur(8px);transition:border-color 0.3s}
+.coin-card.synced{border-color:rgba(0,230,118,0.3)}
+.coin-card.pending{border-color:rgba(255,165,0,0.3)}
+.coin-card.offline{border-color:rgba(255,68,68,0.2);opacity:0.5}
+
+.coin-header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.coin-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0}
+.coin-icon.bch{background:linear-gradient(135deg,#0ac18e,#089668);color:#fff}
+.coin-icon.btc{background:linear-gradient(135deg,#f7931a,#c47a15);color:#fff}
+.coin-icon.dgb{background:linear-gradient(135deg,#006ad2,#004e9a);color:#fff}
+.coin-icon.doge{background:linear-gradient(135deg,#c3a634,#ba9f33);color:#fff}
+.coin-name{font-size:20px;font-weight:700;color:#fff}
+.coin-symbol{font-size:14px;color:#ffffff;margin-left:4px}
+.coin-status{margin-left:auto;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:20px;font-weight:700}
+.coin-status.synced{background:rgba(0,230,118,0.12);color:#00e676}
+.coin-status.pending{background:rgba(255,165,0,0.12);color:#ffa500}
+.coin-status.offline{background:rgba(255,68,68,0.1);color:#ff4444}
+
+/* Sync progress bar inside pending cards */
+.sync-bar-wrap{margin:8px 0 16px;position:relative;height:24px;background:rgba(255,255,255,0.05);border-radius:12px;overflow:hidden}
+.sync-bar-fill{height:100%;background:linear-gradient(90deg,#e040fb,#aa60ff);border-radius:12px;transition:width 1.5s ease;min-width:2%}
+.sync-bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,0.5)}
+
+/* Stats grid inside synced cards */
+.coin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.stat{background:rgba(10,8,26,0.4);border-radius:8px;padding:12px}
+.stat .slabel{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#ffffff;margin-bottom:4px}
+.stat .sval{font-size:22px;font-weight:700;color:#e040fb}
+.stat .sval.blue{color:#88c8ff}
+.stat .ssub{font-size:12px;color:#ffffff;margin-top:2px}
+
+/* Pending message */
+.pending-msg{font-size:16px;color:#ffa500;text-align:center;padding:8px 0}
+.pending-msg .sub{font-size:14px;color:#ffffff;margin-top:6px}
+
+/* Footer links */
+.footer{margin-top:32px;display:flex;gap:16px;flex-wrap:wrap}
+.footer a{font-size:14px;color:#ffffff;text-decoration:none;border:1px solid rgba(224,64,251,0.1);border-radius:8px;padding:8px 14px;transition:all 0.2s}
+.footer a:hover{color:#e040fb;border-color:rgba(224,64,251,0.3)}
+
+/* Loading skeleton */
+.loading{text-align:center;color:#ffffff;font-size:15px;padding:40px 0}
+.loading .spinner{width:24px;height:24px;border:2px solid #2a2040;border-top-color:#e040fb;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div class="app">
+  <div class="eyebrow">Solo Mining // Multi-Coin</div>
+  <h1 class="title">Apathec<em>Mines</em> Hub</h1>
+  <div class="subtitle">Unified dashboard — auto-discovers installed nodes</div>
+
+  <div class="stratum-box">
+    <div>
+      <div class="slabel">Connect Your Miner</div>
+      <div class="sval" id="stratumAddr">stratum+tcp://umbrel.local:3333</div>
+    </div>
+    <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('stratumAddr').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
+  </div>
+
+  <div class="section-label">Mining Pools</div>
+  <div class="coins" id="coins">
+    <div class="loading"><div class="spinner"></div>Scanning for nodes...</div>
+  </div>
+
+  <div class="footer">
+    <a href="/logs/" target="_blank">View Logs</a>
+    <a href="https://github.com/apathec/apathecmines-umbrel-store" target="_blank">GitHub</a>
+  </div>
+</div>
+
+<script>
+// ─── Coin registry — add new coins here, restart Hub to pick them up ───
+const COINS = [
+  {
+    id: 'bch',
+    name: 'Bitcoin Cash',
+    symbol: 'BCH',
+    poolId: 'apathecmines-bch-solo',
+    rpcPath: '/node/bch/',
+    restPath: '/rest/bch/',
+    stratum: 3333,
+    icon: '₿'
+  }
+  // Uncomment and configure as you add node apps:
+  // {
+  //   id: 'btc',
+  //   name: 'Bitcoin',
+  //   symbol: 'BTC',
+  //   poolId: 'apathecmines-btc-solo',
+  //   rpcPath: '/node/btc/',
+  //   restPath: '/rest/btc/',
+  //   stratum: 6001,
+  //   icon: '₿'
+  // },
+  // {
+  //   id: 'dgb',
+  //   name: 'DigiByte',
+  //   symbol: 'DGB',
+  //   poolId: 'apathecmines-dgb-solo',
+  //   rpcPath: '/node/dgb/',
+  //   restPath: '/rest/dgb/',
+  //   stratum: 6003,
+  //   icon: 'D'
+  // },
+  // {
+  //   id: 'doge',
+  //   name: 'Dogecoin',
+  //   symbol: 'DOGE',
+  //   poolId: 'apathecmines-doge-solo',
+  //   rpcPath: '/node/doge/',
+  //   restPath: '/rest/doge/',
+  //   stratum: 6004,
+  //   icon: 'Ð'
+  // }
+];
+
+function fmtHash(h){
+  if(!h||h<=0)return'0 H/s';
+  if(h>=1e12)return(h/1e12).toFixed(2)+' TH/s';
+  if(h>=1e9)return(h/1e9).toFixed(2)+' GH/s';
+  if(h>=1e6)return(h/1e6).toFixed(2)+' MH/s';
+  if(h>=1e3)return(h/1e3).toFixed(2)+' KH/s';
+  return h.toFixed(0)+' H/s';
+}
+
+function fmtDiff(d){
+  if(!d)return'—';
+  if(d>=1e12)return(d/1e12).toFixed(2)+'T';
+  if(d>=1e9)return(d/1e9).toFixed(2)+'G';
+  if(d>=1e6)return(d/1e6).toFixed(2)+'M';
+  return d.toFixed(2);
+}
+
+async function checkNode(coin){
+  try{
+    const res=await fetch(coin.restPath+'chaininfo.json');
+    if(!res.ok)throw new Error(res.status);
+    const data=await res.json();
+    const pct=(data.verificationprogress||0)*100;
+    const synced=data.initialblockdownload===false&&pct>=99.99;
+    return{
+      online:true,
+      synced:synced,
+      pct:pct,
+      blocks:data.blocks||0,
+      headers:data.headers||0,
+      difficulty:data.difficulty||0,
+      chain:data.chain||'main'
+    };
+  }catch(e){
+    return{online:false,synced:false,pct:0};
+  }
+}
+
+async function getPoolStats(coin){
+  try{
+    const[perfRes,minersRes]=await Promise.all([
+      fetch('/api/pools/'+coin.poolId+'/performance'),
+      fetch('/api/pools/'+coin.poolId+'/miners')
+    ]);
+    let hashrate=0,miners=0,blocks=0;
+    if(perfRes.ok){
+      const perf=await perfRes.json();
+      const samples=perf.stats||[];
+      if(samples.length>0){
+        const last=samples[samples.length-1];
+        hashrate=last.poolHashrate||last.networkhashrate||0;
+      }
+    }
+    if(minersRes.ok){
+      const m=await minersRes.json();
+      const active=(m||[]).filter(x=>(x.hashrate||0)>0);
+      miners=active.length;
+    }
+    try{
+      const bRes=await fetch('/api/pools/'+coin.poolId+'/blocks?pageSize=100');
+      if(bRes.ok){const bd=await bRes.json();blocks=(bd||[]).length;}
+    }catch(e){}
+    return{hashrate,miners,blocks};
+  }catch(e){
+    return{hashrate:0,miners:0,blocks:0};
+  }
+}
+
+function renderCoin(coin,node,pool){
+  const card=document.createElement('div');
+  card.className='coin-card '+(node.online?(node.synced?'synced':'pending'):'offline');
+
+  const status=node.online?(node.synced?'Mining':'Syncing'):'Offline';
+  const statusClass=node.online?(node.synced?'synced':'pending'):'offline';
+
+  let body='';
+  if(node.online&&node.synced){
+    body=`
+      <div class="coin-stats">
+        <div class="stat"><div class="slabel">Pool Hashrate</div><div class="sval">${fmtHash(pool.hashrate)}</div></div>
+        <div class="stat"><div class="slabel">Active Miners</div><div class="sval blue">${pool.miners}</div></div>
+        <div class="stat"><div class="slabel">Blocks Found</div><div class="sval">${pool.blocks}</div></div>
+        <div class="stat"><div class="slabel">Difficulty</div><div class="sval blue">${fmtDiff(node.difficulty)}</div></div>
+        <div class="stat"><div class="slabel">Block Height</div><div class="sval">${(node.blocks||0).toLocaleString()}</div></div>
+        <div class="stat"><div class="slabel">Stratum Port</div><div class="sval blue">${coin.stratum}</div></div>
+      </div>`;
+  } else if(node.online){
+    body=`
+      <div class="sync-bar-wrap">
+        <div class="sync-bar-fill" style="width:${Math.min(node.pct,100)}%"></div>
+        <div class="sync-bar-text">${node.pct.toFixed(2)}%</div>
+      </div>
+      <div class="pending-msg">
+        Pending — waiting on full node sync
+        <div class="sub">Block ${(node.blocks||0).toLocaleString()} of ${(node.headers||0).toLocaleString()}</div>
+      </div>`;
+  } else {
+    body=`<div class="pending-msg" style="color:#ff4444">Node not detected<div class="sub">Install AM ${coin.symbol} Node to enable mining</div></div>`;
+  }
+
+  card.innerHTML=`
+    <div class="coin-header">
+      <div class="coin-icon ${coin.id}">${coin.icon}</div>
+      <div>
+        <span class="coin-name">${coin.name}</span>
+        <span class="coin-symbol">${coin.symbol}</span>
+      </div>
+      <span class="coin-status ${statusClass}">${status}</span>
+    </div>
+    ${body}`;
+  return card;
+}
+
+async function poll(){
+  const container=document.getElementById('coins');
+  const cards=[];
+
+  for(const coin of COINS){
+    const node=await checkNode(coin);
+    let pool={hashrate:0,miners:0,blocks:0};
+    if(node.synced){
+      pool=await getPoolStats(coin);
+    }
+    cards.push(renderCoin(coin,node,pool));
+  }
+
+  container.innerHTML='';
+  if(cards.length===0){
+    container.innerHTML='<div class="loading">No coins configured</div>';
+  } else {
+    cards.forEach(c=>container.appendChild(c));
+  }
+}
+
+poll();
+setInterval(poll,15000);
+
+// ─── Twinkling stars ───
+(function(){
+  const c=document.getElementById('stars');
+  const ctx=c.getContext('2d');
+  let stars=[],t=0;
+  function rng(seed){let v=seed>>>0;return function(){v^=v<<13;v^=v>>17;v^=v<<5;return(v>>>0)/0xffffffff}}
+  function build(){const r=rng(42);const W=c.width,H=c.height;stars=[];for(let i=0;i<200;i++){const x=r()*W,y=r()*H,v=r();const inMag=x>W*0.3&&x<W*0.65;const col=inMag?"255,"+(130+Math.floor(r()*110))+",235":x<W*0.35?(150+Math.floor(r()*90))+","+(175+Math.floor(r()*65))+",255":"255,255,255";stars.push({x,y,col,sz:v>0.955?2+r()*1.8:v>0.88?1+r()*0.9:0.35+r()*0.65,spike:v>0.955,sl:v>0.955?20+r()*28:7+r()*13,ph:r()*Math.PI*2,sp:0.35+r()*0.85,ba:v>0.955?0.55+r()*0.45:v>0.88?0.2+r()*0.55:0.06+r()*0.45});}}
+  function spk(x,y,r,sl,col,a){ctx.save();ctx.globalAlpha=a;ctx.fillStyle="rgba("+col+",1)";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const g=ctx.createLinearGradient(x,y,x+dx*sl,y+dy*sl);g.addColorStop(0,"rgba("+col+",1)");g.addColorStop(1,"rgba(0,0,0,0)");ctx.strokeStyle=g;ctx.lineWidth=r*0.45;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+dx*sl,y+dy*sl);ctx.stroke();}ctx.restore();}
+  function frame(){t+=0.012;ctx.clearRect(0,0,c.width,c.height);for(const s of stars){const a=s.ba*(0.4+0.6*Math.sin(t*s.sp+s.ph));if(s.spike)spk(s.x,s.y,s.sz,s.sl,s.col,a);else{ctx.globalAlpha=a;ctx.fillStyle="rgba("+s.col+",1)";ctx.beginPath();ctx.arc(s.x,s.y,s.sz,0,Math.PI*2);ctx.fill();}}ctx.globalAlpha=1;requestAnimationFrame(frame);}
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;build();}
+  resize();frame();window.addEventListener('resize',resize);
+})();
+</script>
+</body>
+</html>
