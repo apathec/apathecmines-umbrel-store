@@ -76,6 +76,8 @@ html,body{min-height:100vh;background:#02010a;overflow-x:hidden}
 .coin-status-badge.synced{background:rgba(0,230,118,0.12);color:#00e676}
 .coin-status-badge.pending{background:rgba(255,165,0,0.12);color:#ffa500}
 .coin-status-badge.offline{background:rgba(255,68,68,0.1);color:#ff4444}
+.coin-port{font-size:18px;color:#e040fb;font-weight:700;margin-left:6px}
+.coin-card.selected{border-color:rgba(224,64,251,0.5);box-shadow:0 0 16px rgba(224,64,251,0.15)}
 .sync-bar-wrap{margin:8px 0 16px;position:relative;height:24px;background:rgba(255,255,255,0.05);border-radius:12px;overflow:hidden}
 .sync-bar-fill{height:100%;background:linear-gradient(90deg,#e040fb,#aa60ff);border-radius:12px;transition:width 1.5s ease;min-width:2%}
 .sync-bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,0.5)}
@@ -84,6 +86,15 @@ html,body{min-height:100vh;background:#02010a;overflow-x:hidden}
 .stat .slabel{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#fff;margin-bottom:4px}
 .stat .sval{font-size:22px;font-weight:700;color:#e040fb}
 .stat .sval.blue{color:#88c8ff}
+.miners-section{margin-top:16px;border-top:1px solid rgba(224,64,251,0.1);padding-top:14px}
+.miners-label{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#fff;margin-bottom:10px}
+.miners-table{display:flex;flex-direction:column;gap:2px}
+.miners-header{display:grid;grid-template-columns:1fr 120px 80px;gap:8px;padding:6px 10px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#706c88}
+.miner-row{display:grid;grid-template-columns:1fr 120px 80px;gap:8px;padding:8px 10px;background:rgba(10,8,26,0.4);border-radius:6px;font-size:13px;align-items:center}
+.mr-wallet{color:#e040fb;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mr-hashrate{color:#fff;font-weight:700;text-align:right}
+.mr-shares{color:#88c8ff;text-align:right}
+.mh-hashrate,.mh-shares{text-align:right}
 .pending-msg{font-size:16px;color:#ffa500;text-align:center;padding:8px 0}
 .pending-msg .sub{font-size:14px;color:#fff;margin-top:6px}
 .footer{margin-top:32px;display:flex;gap:16px;flex-wrap:wrap}
@@ -107,9 +118,9 @@ html,body{min-height:100vh;background:#02010a;overflow-x:hidden}
   <div class="stratum-box">
     <div>
       <div class="slabel">Connect Your Miner</div>
-      <div class="sval" id="stratumAddr">stratum+tcp://umbrel.local:3333</div>
+      <div class="sval" id="stratumAddr">stratum+tcp://umbrel.local:xxxx</div>
     </div>
-    <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('stratumAddr').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
+    <button class="copy-btn" id="stratumCopy" onclick="navigator.clipboard.writeText(document.getElementById('stratumAddr').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
   </div>
 
   <div class="section-label">Mining Pools</div>
@@ -173,9 +184,10 @@ async function getPoolStats(coin){
     ]);
     let hashrate=0,miners=0,blocks=0;
     if(perfRes.ok){const perf=await perfRes.json();const s=perf.stats||[];if(s.length>0)hashrate=s[s.length-1].poolHashrate||0;}
-    if(minersRes.ok){const m=await minersRes.json();miners=(m||[]).filter(x=>(x.hashrate||0)>0).length;}
+    let minerList=[];
+    if(minersRes.ok){const m=await minersRes.json();minerList=(m||[]).filter(x=>(x.hashrate||0)>0);miners=minerList.length;}
     try{const bRes=await fetch('/api/pools/'+coin.poolId+'/blocks?pageSize=100');if(bRes.ok){const bd=await bRes.json();blocks=(bd||[]).length;}}catch(e){}
-    return{hashrate,miners,blocks};
+    return{hashrate,miners,blocks,minerList};
   }catch(e){return{hashrate:0,miners:0,blocks:0};}
 }
 
@@ -192,15 +204,39 @@ function renderCoin(coin,node,pool){
       <div class="stat"><div class="slabel">Blocks Found</div><div class="sval">${pool.blocks}</div></div>
       <div class="stat"><div class="slabel">Difficulty</div><div class="sval blue">${fmtDiff(node.difficulty)}</div></div>
       <div class="stat"><div class="slabel">Block Height</div><div class="sval">${(node.blocks||0).toLocaleString()}</div></div>
-      <div class="stat"><div class="slabel">Stratum Port</div><div class="sval blue">${coin.stratum}</div></div>
-    </div>`;
+    </div>
+    ${pool.minerList&&pool.minerList.length>0?`
+    <div class="miners-section">
+      <div class="miners-label">Connected Miners</div>
+      <div class="miners-table">
+        <div class="miners-header">
+          <span class="mh-wallet">Wallet</span>
+          <span class="mh-hashrate">Hashrate</span>
+          <span class="mh-shares">Shares/s</span>
+        </div>
+        ${pool.minerList.map(m=>`
+        <div class="miner-row">
+          <span class="mr-wallet" title="${m.miner||''}">${(m.miner||'').substring(0,16)}…${(m.miner||'').slice(-8)}</span>
+          <span class="mr-hashrate">${fmtHash(m.hashrate||0)}</span>
+          <span class="mr-shares">${(m.sharesPerSecond||0).toFixed(2)}</span>
+        </div>`).join('')}
+      </div>
+    </div>`:''}`;
   } else if(node.online){
     body=`<div class="sync-bar-wrap"><div class="sync-bar-fill" style="width:${Math.min(node.pct,100)}%"></div><div class="sync-bar-text">${node.pct.toFixed(2)}%</div></div>
     <div class="pending-msg">Pending — waiting on full node sync<div class="sub">Block ${(node.blocks||0).toLocaleString()} of ${(node.headers||0).toLocaleString()}</div></div>`;
   } else {
     body=`<div class="pending-msg" style="color:#ff4444">Node not detected<div class="sub">Install AM ${coin.symbol} Node to enable mining</div></div>`;
   }
-  card.innerHTML=`<div class="coin-header"><div class="coin-icon ${coin.id}">${coin.icon}</div><div><span class="coin-name">${coin.name}</span><span class="coin-symbol">${coin.symbol}</span></div><span class="coin-status-badge ${statusClass}">${status}</span></div>${body}`;
+  card.innerHTML=`<div class="coin-header"><div class="coin-icon ${coin.id}">${coin.icon}</div><div><span class="coin-name">${coin.name}</span><span class="coin-symbol">${coin.symbol}</span><span class="coin-port">:${coin.stratum}</span></div><span class="coin-status-badge ${statusClass}">${status}</span></div>${body}`;
+  if(node.online){
+    card.style.cursor='pointer';
+    card.addEventListener('click',function(){
+      document.getElementById('stratumAddr').textContent='stratum+tcp://umbrel.local:'+coin.stratum;
+      document.querySelectorAll('.coin-card').forEach(c=>c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+  }
   return card;
 }
 
@@ -209,7 +245,7 @@ async function poll(){
   const cards=[];
   for(const coin of COINS){
     const node=await checkNode(coin);
-    let pool={hashrate:0,miners:0,blocks:0};
+    let pool={hashrate:0,miners:0,blocks:0,minerList:[]};
     if(node.synced)pool=await getPoolStats(coin);
     cards.push(renderCoin(coin,node,pool));
   }
