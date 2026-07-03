@@ -1,16 +1,30 @@
 {
-    "bitcoin-cash": {
-        "name": "BitcoinCash",
-        "symbol": "BCH",
-        "family": "bitcoin",
-        "website": "",
-        "market": "",
-        "twitter": "",
-        "telegram": "",
-        "discord": "",
-        "canonicalName": "Bitcoin Cash",
-        "explorerBlockLink": "https://blockchair.com/bitcoin-cash/block/$height$",
-        "explorerTxLink": "https://blockchair.com/bitcoin-cash/transaction/$txid$",
-        "explorerAccountLink": "https://blockchair.com/bitcoin-cash/address/$address$"
-    }
+  "bitcoin-cash": {
+    "name": "Bitcoin Cash",
+    "canonicalName": "Bitcoin-Cash",
+    "symbol": "BCH",
+    "family": "bitcoin",
+    "website": "",
+    "market": "",
+    "twitter": "",
+    "telegram": "",
+    "discord": "",
+    "coinbaseHasher": {
+      "hash": "sha256d"
+    },
+    "headerHasher": {
+      "hash": "sha256d"
+    },
+    "blockHasher": {
+      "hash": "reverse",
+      "args": [
+        {
+          "hash": "sha256d"
+        }
+      ]
+    },
+    "explorerBlockLink": "https://blockchair.com/bitcoin-cash/block/$height$",
+    "explorerTxLink": "https://blockchair.com/bitcoin-cash/transaction/$txid$",
+    "explorerAccountLink": "https://blockchair.com/bitcoin-cash/address/$address$"
+  }
 }
