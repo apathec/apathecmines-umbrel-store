@@ -86,6 +86,7 @@ html,body{min-height:100vh;background:#02010a;overflow-x:hidden}
 .stat .slabel{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#fff;margin-bottom:4px}
 .stat .sval{font-size:22px;font-weight:700;color:#e040fb}
 .stat .sval.blue{color:#88c8ff}
+.stat .sval.green{color:#00e676}
 .miners-section{margin-top:16px;border-top:1px solid rgba(224,64,251,0.1);padding-top:14px}
 .miners-label{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#fff;margin-bottom:10px}
 .miners-table{display:flex;flex-direction:column;gap:2px}
@@ -136,6 +137,17 @@ html,body{min-height:100vh;background:#02010a;overflow-x:hidden}
 .md-pay-row .ptx{color:#e040fb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .md-pay-row .pdate{color:#706c88;text-align:right}
 .md-no-data{font-size:12px;color:#706c88;text-align:center;padding:12px 0}
+
+/* Payout info section */
+.payout-info{margin-top:16px;border-top:1px solid rgba(224,64,251,0.1);padding-top:14px}
+.payout-label{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#fff;margin-bottom:10px}
+.payout-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:10px}
+.payout-item{background:rgba(10,8,26,0.4);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:3px}
+.payout-item.pi-wallet{grid-column:1/-1}
+.pi-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#706c88}
+.pi-val{font-size:14px;font-weight:700;color:#fff}
+.pi-val.wallet{font-size:12px;color:#e040fb;word-break:break-all}
+.payout-note{font-size:12px;color:#a09cb8;line-height:1.5;padding:8px 0}
 .pending-msg{font-size:16px;color:#ffa500;text-align:center;padding:8px 0}
 .pending-msg .sub{font-size:14px;color:#fff;margin-top:6px}
 .footer{margin-top:32px;display:flex;gap:16px;flex-wrap:wrap}
@@ -185,7 +197,11 @@ const COINS = [
     rpcPath: '/node/bch/',
     restPath: '/rest/bch/',
     stratum: 3333,
-    icon: '₿'
+    icon: '₿',
+    fee: 0.05,
+    payoutScheme: 'SOLO',
+    minPayout: 0.001,
+    operatorWallet: 'bitcoincash:qr95w74v6w2scnw6z733jz4c2dggn38tpurhg3vvwt'
   }
 ];
 
@@ -219,14 +235,12 @@ async function checkNode(coin){
 
 async function getPoolStats(coin){
   try{
-    const[perfRes,minersRes]=await Promise.all([
-      fetch('/api/pools/'+coin.poolId+'/performance'),
+    const[minersRes]=await Promise.all([
       fetch('/api/pools/'+coin.poolId+'/miners')
     ]);
     let hashrate=0,miners=0,blocks=0;
-    if(perfRes.ok){const perf=await perfRes.json();const s=perf.stats||[];if(s.length>0)hashrate=s[s.length-1].poolHashrate||0;}
     let minerList=[];
-    if(minersRes.ok){const m=await minersRes.json();minerList=(m||[]).filter(x=>(x.hashrate||0)>0);miners=minerList.length;}
+    if(minersRes.ok){const m=await minersRes.json();minerList=(m||[]).filter(x=>(x.hashrate||0)>0);miners=minerList.length;hashrate=minerList.reduce((s,x)=>s+(x.hashrate||0),0);}
     try{const bRes=await fetch('/api/pools/'+coin.poolId+'/blocks?pageSize=100');if(bRes.ok){const bd=await bRes.json();blocks=(bd||[]).length;}}catch(e){}
     return{hashrate,miners,blocks,minerList};
   }catch(e){return{hashrate:0,miners:0,blocks:0};}
@@ -245,6 +259,7 @@ function renderCoin(coin,node,pool){
       <div class="stat"><div class="slabel">Blocks Found</div><div class="sval">${pool.blocks}</div></div>
       <div class="stat"><div class="slabel">Difficulty</div><div class="sval blue">${fmtDiff(node.difficulty)}</div></div>
       <div class="stat"><div class="slabel">Block Height</div><div class="sval">${(node.blocks||0).toLocaleString()}</div></div>
+      <div class="stat"><div class="slabel">Pool Fee</div><div class="sval green">${coin.fee}%</div></div>
     </div>
     ${pool.minerList&&pool.minerList.length>0?`
     <div class="miners-section">
@@ -263,8 +278,17 @@ function renderCoin(coin,node,pool){
         </div>`).join('')}
       </div>
       <div id="miner-detail-slot"></div>
-    </div>`:''}`;
-  } else if(node.online){
+    </div>`:''}
+    <div class="payout-info">
+      <div class="payout-label">Payout Info</div>
+      <div class="payout-grid">
+        <div class="payout-item"><span class="pi-label">Scheme</span><span class="pi-val">${coin.payoutScheme}</span></div>
+        <div class="payout-item"><span class="pi-label">Pool Fee</span><span class="pi-val">${coin.fee}%</span></div>
+        <div class="payout-item"><span class="pi-label">Min Payout</span><span class="pi-val">${coin.minPayout} ${coin.symbol}</span></div>
+        <div class="payout-item pi-wallet"><span class="pi-label">Pool Operator</span><span class="pi-val wallet">${coin.operatorWallet}</span></div>
+      </div>
+      <div class="payout-note">SOLO payouts go directly to your miner wallet address. The ${coin.fee}% pool fee is deducted from block rewards automatically.</div>
+    </div>`;
     body=`<div class="sync-bar-wrap"><div class="sync-bar-fill" style="width:${Math.min(node.pct,100)}%"></div><div class="sync-bar-text">${node.pct.toFixed(2)}%</div></div>
     <div class="pending-msg">Pending — waiting on full node sync<div class="sub">Block ${(node.blocks||0).toLocaleString()} of ${(node.headers||0).toLocaleString()}</div></div>`;
   } else {
