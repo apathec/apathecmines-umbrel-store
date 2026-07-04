@@ -228,7 +228,7 @@ async function checkNode(coin){
     if(!res.ok)throw new Error(res.status);
     const data=await res.json();
     const pct=(data.verificationprogress||0)*100;
-    const synced=data.initialblockdownload===false&&pct>=99.99;
+    const synced=pct>=99.9;
     return{online:true,synced,pct,blocks:data.blocks||0,headers:data.headers||0,difficulty:data.difficulty||0};
   }catch(e){return{online:false,synced:false,pct:0};}
 }
@@ -485,7 +485,7 @@ document.addEventListener('click',function(e){
   showMinerDetail(poolId,address,slot);
 });
 
-async function poll(){
+async function poll(){if(document.querySelector(".miner-detail"))return;
   const container=document.getElementById('coins');
   const cards=[];
   for(const coin of COINS){
@@ -498,7 +498,7 @@ async function poll(){
   cards.forEach(c=>container.appendChild(c));
 }
 poll();
-setInterval(poll,15000);
+setInterval(poll,5000);
 
 // Twinkling stars
 (function(){
