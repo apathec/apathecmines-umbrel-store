@@ -17,8 +17,8 @@ services:
         apk add --no-cache wget > /dev/null 2>&1
         REPO=https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-bch-node
         mkdir -p /data/web
-        [ -f /data/web/index.html ] || wget -qO /data/web/index.html $$REPO/index.html
-        [ -f /data/nginx.conf ] || wget -qO /data/nginx.conf $$REPO/nginx.conf
+        wget -qO /data/web/index.html $$REPO/index.html
+        wget -qO /data/nginx.conf $$REPO/nginx.conf
         echo "Init complete"
 
   web:
