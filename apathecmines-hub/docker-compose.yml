@@ -17,10 +17,10 @@ services:
         apk add --no-cache wget > /dev/null 2>&1
         REPO=https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-hub
         mkdir -p /data/web /data/pgdata
-        [ -f /data/web/index.html ] || wget -qO /data/web/index.html $$REPO/index.html
-        [ -f /data/nginx.conf ] || wget -qO /data/nginx.conf $$REPO/nginx.conf
+        wget -qO /data/web/index.html $$REPO/index.html
+        wget -qO /data/nginx.conf $$REPO/nginx.conf
+        wget -qO /data/coins.json $$REPO/coins.json
         [ -f /data/config.json ] || wget -qO /data/config.json $$REPO/config.json
-        [ -f /data/coins.json ] || wget -qO /data/coins.json $$REPO/coins.json
         [ -f /data/init.sql ] || wget -qO /data/init.sql $$REPO/init.sql
         echo "Init complete"
 
