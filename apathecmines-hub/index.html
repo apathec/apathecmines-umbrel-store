@@ -485,7 +485,7 @@ document.addEventListener('click',function(e){
   showMinerDetail(poolId,address,slot);
 });
 
-async function poll(){if(document.querySelector('.miner-detail'))return;
+async function poll(){
   const container=document.getElementById('coins');
   const cards=[];
   for(const coin of COINS){
@@ -498,7 +498,7 @@ async function poll(){if(document.querySelector('.miner-detail'))return;
   cards.forEach(c=>container.appendChild(c));
 }
 poll();
-setInterval(poll,5000);
+setInterval(poll,15000);
 
 // Twinkling stars
 (function(){
