@@ -305,6 +305,7 @@ function renderCoin(coin,node,pool){
       </div>
       <div class="payout-note">SOLO payouts go directly to your miner wallet address. The ${coin.fee}% pool fee is deducted from block rewards automatically.</div>
     </div>`;
+  } else if(node.online){
     body=`<div class="sync-bar-wrap"><div class="sync-bar-fill" style="width:${Math.min(node.pct,100)}%"></div><div class="sync-bar-text">${node.pct.toFixed(2)}%</div></div>
     <div class="pending-msg">Pending — waiting on full node sync<div class="sub">Block ${(node.blocks||0).toLocaleString()} of ${(node.headers||0).toLocaleString()}</div></div>`;
   } else {
