@@ -235,15 +235,31 @@ async function checkNode(coin){
 
 async function getPoolStats(coin){
   try{
-    const[minersRes]=await Promise.all([
-      fetch('/api/pools/'+coin.poolId+'/miners')
-    ]);
+    const minersRes=await fetch('/api/pools/'+coin.poolId+'/miners');
     let hashrate=0,miners=0,blocks=0;
     let minerList=[];
-    if(minersRes.ok){const m=await minersRes.json();minerList=(m||[]).filter(x=>(x.hashrate||0)>0);miners=minerList.length;hashrate=minerList.reduce((s,x)=>s+(x.hashrate||0),0);}
+    if(minersRes.ok){
+      const allMiners=await minersRes.json()||[];
+      // Check each miner's detail for real worker hashrate
+      for(const m of allMiners){
+        try{
+          const dRes=await fetch('/api/pools/'+coin.poolId+'/miners/'+encodeURIComponent(m.miner));
+          if(dRes.ok){
+            const detail=await dRes.json();
+            const workers=detail.performance?.workers||{};
+            const workerHr=Object.values(workers).reduce((s,w)=>s+(w.hashrate||0),0);
+            if(workerHr>0){
+              minerList.push({miner:m.miner,hashrate:workerHr,sharesPerSecond:Object.values(workers).reduce((s,w)=>s+(w.sharesPerSecond||0),0)});
+              hashrate+=workerHr;
+            }
+          }
+        }catch(e){}
+      }
+      miners=minerList.length;
+    }
     try{const bRes=await fetch('/api/pools/'+coin.poolId+'/blocks?pageSize=100');if(bRes.ok){const bd=await bRes.json();blocks=(bd||[]).length;}}catch(e){}
     return{hashrate,miners,blocks,minerList};
-  }catch(e){return{hashrate:0,miners:0,blocks:0};}
+  }catch(e){return{hashrate:0,miners:0,blocks:0,minerList:[]};}
 }
 
 function renderCoin(coin,node,pool){
@@ -485,7 +501,7 @@ document.addEventListener('click',function(e){
   showMinerDetail(poolId,address,slot);
 });
 
-async function poll(){if(document.querySelector(".miner-detail"))return;
+async function poll(){if(document.querySelector('.miner-detail'))return;
   const container=document.getElementById('coins');
   const cards=[];
   for(const coin of COINS){
