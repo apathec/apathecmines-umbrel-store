@@ -1,0 +1,327 @@
+version: "3.7"
+
+# ── ApathecMines Hub — unified BCH2 solo-mining dashboard ────────────────────
+# Miningcore multi-pool + Postgres + galaxy dashboard + Dozzle.
+#
+# Mines BCH2 (Bitcoin Cash II) — a SHA-256 cryptocurrency forked from BC2 at
+# block 53,200 with Bitcoin Cash consensus rules.  NOT regular BCH.
+#
+# Security: all credentials generated per-install by exports.sh (BCH2
+# Forge-Solo pattern).  The Hub reads the BCH2 node's RPC secrets from its
+# sibling app data directory automatically.
+#
+# Miningcore runs on host network so it can reach the BCH2 node's published
+# ports (RPC 8342, ZMQ 28332) on 127.0.0.1.
+# Nginx uses host.docker.internal to reverse-proxy both Miningcore's API
+# and the BCH2 node's RPC/REST.
+
+services:
+  # ── Umbrel front-door proxy ───────────────────────────────────────────────
+  app_proxy:
+    environment:
+      APP_HOST: apathecmines-hub_web_1
+      APP_PORT: 80
+
+  # ── Init container — generates all configs with per-install secrets ───────
+  init:
+    image: alpine:3.19
+    restart: "no"
+    volumes:
+      - ${APP_DATA_DIR}:/data
+    environment:
+      - APP_DB_PASSWORD=${APP_DB_PASSWORD}
+      - APP_BCH2_RPC_USER=${APP_BCH2_RPC_USER}
+      - APP_BCH2_RPC_PASSWORD=${APP_BCH2_RPC_PASSWORD}
+      - APP_BCH2_RPC_AUTH_B64=${APP_BCH2_RPC_AUTH_B64}
+      - APP_POOL_ADDRESS=${APP_POOL_ADDRESS}
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        apk add --no-cache wget > /dev/null 2>&1
+        REPO=https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-hub
+        mkdir -p /data/web /data/pgdata
+
+        # Dashboard HTML
+        wget -qO /data/web/index.html $$REPO/index.html
+
+        # ── coins.json — BCH2 coin definition for Miningcore ──
+        cat > /data/coins.json <<'COINSEOF'
+        {
+          "bitcoin-cash-ii": {
+            "name": "Bitcoin Cash II",
+            "canonicalName": "Bitcoin-Cash-II",
+            "symbol": "BCH2",
+            "family": "bitcoin",
+            "website": "https://bch2.org",
+            "market": "",
+            "twitter": "",
+            "telegram": "",
+            "discord": "",
+            "coinbaseHasher": {
+              "hash": "sha256d"
+            },
+            "headerHasher": {
+              "hash": "sha256d"
+            },
+            "blockHasher": {
+              "hash": "reverse",
+              "args": [
+                {
+                  "hash": "sha256d"
+                }
+              ]
+            },
+            "explorerBlockLink": "https://explorer.bch2.org/block/$height$",
+            "explorerTxLink": "https://explorer.bch2.org/tx/$txid$",
+            "explorerAccountLink": "https://explorer.bch2.org/address/$address$"
+          }
+        }
+        COINSEOF
+
+        # ── nginx.conf — dynamic host addressing, no hardcoded IPs ──
+        cat > /data/nginx.conf <<'NGINX'
+        server {
+            listen 80;
+            server_name _;
+
+            root /usr/share/nginx/html;
+            index index.html;
+
+            location / {
+                try_files $uri $uri/ /index.html;
+            }
+
+            # Miningcore API — runs on host network port 4000
+            location /api/ {
+                proxy_pass http://host.docker.internal:4000/api/;
+                proxy_set_header Host $host;
+                proxy_read_timeout 30s;
+            }
+
+            # BCH2 Node RPC — port 8342 on host (published by BCH2 node app)
+            location /node/bch2/ {
+                proxy_pass http://host.docker.internal:8342/;
+                proxy_set_header Host $host;
+                proxy_set_header Authorization "Basic RPCAUTH_PLACEHOLDER";
+                proxy_set_header Content-Type "application/json";
+                proxy_read_timeout 30s;
+            }
+
+            # BCH2 Node REST API (for sync status)
+            location /rest/bch2/ {
+                proxy_pass http://host.docker.internal:8342/rest/;
+                proxy_set_header Host $host;
+                proxy_read_timeout 30s;
+            }
+
+            # Dozzle log viewer
+            location /logs/ {
+                proxy_pass http://dozzle:8080/logs/;
+                proxy_set_header Host $host;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "upgrade";
+                proxy_http_version 1.1;
+                proxy_read_timeout 300s;
+            }
+        }
+        NGINX
+        # Inject real Base64 auth token
+        sed -i "s|RPCAUTH_PLACEHOLDER|${APP_BCH2_RPC_AUTH_B64}|g" /data/nginx.conf
+
+        # ── Miningcore config.json — BCH2 pool with per-install secrets ──
+        cat > /data/config.json <<MCEOF
+        {
+          "logging": {
+            "level": "info",
+            "enableConsoleLog": true,
+            "enableConsoleColors": true,
+            "logFile": "",
+            "apiLogFile": "",
+            "logBaseDirectory": "",
+            "perPoolLogFile": true
+          },
+          "banning": {
+            "manager": "Integrated",
+            "banOnJunkReceive": true,
+            "banOnInvalidShares": false
+          },
+          "notifications": {
+            "enabled": false,
+            "email": {
+              "host": "smtp.example.com",
+              "port": 587,
+              "user": "user",
+              "password": "password",
+              "fromAddress": "info@apathecmines.com",
+              "fromName": "ApathecMines"
+            },
+            "admin": {
+              "enabled": false,
+              "emailAddress": "admin@apathecmines.com",
+              "notifyBlockFound": true
+            }
+          },
+          "persistence": {
+            "postgres": {
+              "host": "127.0.0.1",
+              "port": 5433,
+              "user": "miningcore",
+              "password": "${APP_DB_PASSWORD}",
+              "database": "miningcore"
+            }
+          },
+          "paymentProcessing": {
+            "enabled": true,
+            "interval": 600,
+            "shareRecoveryFile": "recovered-shares.txt",
+            "coinbaseString": "Mined with ApathecMines"
+          },
+          "api": {
+            "enabled": true,
+            "listenAddress": "*",
+            "port": 4000,
+            "metricsIpWhitelist": [],
+            "rateLimiting": {
+              "disabled": true,
+              "rules": [
+                {
+                  "Endpoint": "*",
+                  "Period": "1s",
+                  "Limit": 5
+                }
+              ],
+              "ipWhitelist": [""]
+            }
+          },
+          "pools": [
+            {
+              "id": "apathecmines-bch2-solo",
+              "enabled": true,
+              "coin": "bitcoin-cash-ii",
+              "address": "${APP_POOL_ADDRESS}",
+              "addressType": "bcash",
+              "rewardRecipients": [
+                {
+                  "address": "${APP_POOL_ADDRESS}",
+                  "percentage": 0.05
+                }
+              ],
+              "enableAsicBoost": true,
+              "blockRefreshInterval": 0,
+              "jobRebroadcastTimeout": 10,
+              "clientConnectionTimeout": 120,
+              "banning": {
+                "enabled": true,
+                "time": 600,
+                "invalidPercent": 50,
+                "checkThreshold": 50
+              },
+              "ports": {
+                "3333": {
+                  "name": "General ASIC",
+                  "listenAddress": "0.0.0.0",
+                  "difficulty": 1024,
+                  "varDiff": {
+                    "minDiff": 1,
+                    "targetTime": 15,
+                    "retargetTime": 90,
+                    "variancePercent": 30
+                  }
+                }
+              },
+              "daemons": [
+                {
+                  "host": "127.0.0.1",
+                  "port": 8342,
+                  "user": "${APP_BCH2_RPC_USER}",
+                  "password": "${APP_BCH2_RPC_PASSWORD}",
+                  "zmqBlockNotifySocket": "tcp://127.0.0.1:28332"
+                }
+              ],
+              "paymentProcessing": {
+                "enabled": true,
+                "minimumPayment": 0.001,
+                "payoutScheme": "SOLO",
+                "payoutSchemeConfig": {
+                  "factor": 2
+                }
+              }
+            }
+          ]
+        }
+        MCEOF
+
+        # init.sql — only on first install
+        [ -f /data/init.sql ] || wget -qO /data/init.sql $$REPO/init.sql
+
+        echo "Hub init complete — BCH2 pool configured with per-install secrets"
+
+  # ── Nginx dashboard ───────────────────────────────────────────────────────
+  web:
+    image: nginx:1.25-alpine
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${APP_DATA_DIR}/web:/usr/share/nginx/html:ro
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      miningcore:
+        condition: service_started
+
+  # ── Miningcore (multi-pool engine) ────────────────────────────────────────
+  # Runs on host network so it can reach:
+  #   • BCH2 node RPC at 127.0.0.1:8342 (published by apathecmines-bch2-node)
+  #   • BCH2 node ZMQ at 127.0.0.1:28332
+  #   • Postgres at 127.0.0.1:5433
+  miningcore:
+    image: theretromike/miningcore
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ${APP_DATA_DIR}/config.json:/app/config.json:ro
+      - ${APP_DATA_DIR}/coins.json:/app/build/coins.json:ro
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+
+  # ── Postgres (Miningcore persistence) ─────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_USER: miningcore
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD}
+      POSTGRES_DB: miningcore
+      POSTGRES_HOST_AUTH_METHOD: md5
+      POSTGRES_INITDB_ARGS: "--auth=md5"
+    volumes:
+      - ${APP_DATA_DIR}/pgdata:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U miningcore -d miningcore"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Dozzle log viewer ─────────────────────────────────────────────────────
+  dozzle:
+    image: amir20/dozzle:v8.12.8@sha256:8ff3115c9c9dd7576839df6f2575de345ca7cafa398cf2496f1f19c31d862ac1
+    restart: unless-stopped
+    environment:
+      DOZZLE_BASE: /logs
+      DOZZLE_NO_ANALYTICS: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
