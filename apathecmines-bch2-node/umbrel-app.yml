@@ -1,0 +1,50 @@
+manifestVersion: 1
+id: apathecmines-hub
+name: AM Hub
+tagline: Unified BCH2 solo mining dashboard — auto-discovers the AM BCH2 Node and mines via Miningcore.
+icon: https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-hub/icon.png
+category: bitcoin
+version: "1.1.0"
+port: 3080
+description: |
+  The ApathecMines Hub — a galaxy-themed unified dashboard for solo mining
+  Bitcoin Cash II (BCH2).
+
+  BCH2 is a SHA-256 cryptocurrency forked from BC2 (BitcoinII) at block 53,200
+  with full Bitcoin Cash consensus rules.  No premine, no dev fee — 100% of
+  new coins go to miners.  Accessible difficulty makes solo mining realistic
+  for home ASICs and Bitaxe devices.
+
+  The Hub automatically reads the AM BCH2 Node's RPC credentials (generated
+  per-install) and configures Miningcore to connect to it.  All secrets are
+  unique to your Umbrel — nothing is hardcoded.
+
+  Includes Miningcore (multi-pool), Postgres, and Dozzle log viewer.
+
+  Currently supported: BCH2 (more coins coming)
+  Stratum: BCH2 on port 3333
+
+  Connect your miner: stratum+tcp://umbrel.local:3333
+developer: ApathecMines
+website: https://apathecmines.com
+repo: https://github.com/apathec/apathecmines-umbrel-store
+support: https://github.com/apathec/apathecmines-umbrel-store/issues
+gallery:
+  - https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-hub/1.jpg
+  - https://raw.githubusercontent.com/apathec/apathecmines-umbrel-store/main/apathecmines-hub/2.jpg
+releaseNotes: >-
+  1.1.0 — Switched from BCH to BCH2 (Bitcoin Cash II).  Now uses the official
+  BCH2 node image (ghcr.io/bitcoincashii/forge-solo-node) via the AM BCH2 Node
+  app.  Miningcore connects to BCH2 daemon on RPC 8342 / ZMQ 28332.  Per-install
+  secret generation (BCH2 Forge-Solo pattern) — Postgres password and Miningcore
+  config auto-generated.  Hub reads BCH2 node RPC credentials automatically.
+  Fixed nginx to use host.docker.internal instead of hardcoded IPs.  Added
+  healthchecks on Postgres.  New coins.json with BCH2 definition and explorer
+  links (explorer.bch2.org).
+dependencies:
+  - apathecmines-bch2-node
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: ApathecMines
+submission: https://github.com/apathec/apathecmines-umbrel-store
